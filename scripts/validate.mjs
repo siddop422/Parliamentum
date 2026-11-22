@@ -61,7 +61,8 @@ if (/service[_-]?role|sb_secret_/i.test(html)) {
   errors.push("A privileged Supabase key pattern was found in index.html.");
 }
 
-const ids = [...html.matchAll(/\bid\s*=\s*(["'])(.*?)\1/g)].map((match) => match[2]);
+const markupOnly = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "");
+const ids = [...markupOnly.matchAll(/\bid\s*=\s*(["'])(.*?)\1/g)].map((match) => match[2]);
 const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
 if (duplicateIds.length) {
   warnings.push(`Duplicate HTML id attributes found: ${duplicateIds.join(", ")}`);
