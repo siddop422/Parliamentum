@@ -1,0 +1,4 @@
+project_id = "wbyjqdwmmtznlobsfhck"
+
+[functions.register-player]
+verify_jwt = false
