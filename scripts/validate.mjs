@@ -48,7 +48,7 @@ for (const table of requiredTables) {
 }
 
 for (const rpc of requiredRpcs) {
-  const pattern = new RegExp(String.raw`\\.rpc\\s*\\(\\s*(['"])${rpc}\\1\\s*(?:,|\\))`);
+  const pattern = new RegExp(String.raw`\.rpc\s*\(\s*(['"])${rpc}\1\s*(?:,|\))`);
   if (!pattern.test(appSource)) errors.push(`Missing expected Supabase RPC reference: ${rpc}`);
 }
 
