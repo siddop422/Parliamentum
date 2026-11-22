@@ -30,6 +30,28 @@ for (const [index, match] of inlineScripts.entries()) {
 }
 
 const appSource = inlineScripts.map(([, , body]) => body).join("\n");
+
+const registerFunctionPath = resolve(root, "supabase/functions/register-player/index.ts");
+const supabaseConfigPath = resolve(root, "supabase/config.toml");
+const registerFunction = await readFile(registerFunctionPath, "utf8");
+const supabaseConfig = await readFile(supabaseConfigPath, "utf8");
+
+if (!appSource.includes("register-player") || !appSource.includes("players.parliamentum.invalid")) {
+  errors.push("The app is missing the username-only registration flow.");
+}
+if (appSource.includes('id="parl-email"')) {
+  errors.push("The email-required registration field is still present.");
+}
+if (!registerFunction.includes("admin.createUser") || !registerFunction.includes("email_confirm: true")) {
+  errors.push("The server-side registration function must create confirmed users without sending email.");
+}
+if (!registerFunction.includes("SUPABASE_SERVICE_ROLE_KEY")) {
+  errors.push("The registration function must use the server-side Supabase service-role key.");
+}
+if (!supabaseConfig.includes("[functions.register-player]") || !supabaseConfig.includes("verify_jwt = false")) {
+  errors.push("The public username-registration function must be configured to accept unauthenticated sign-up requests.");
+}
+
 const requiredTables = [
   "saves", "profiles", "room_players", "rooms", "presence",
   "player_wallets", "bills", "votes", "player_deals",
@@ -70,6 +92,7 @@ if (duplicateIds.length) {
 
 console.log(`Parsed ${inlineScripts.length} inline JavaScript block(s).`);
 console.log(`Checked ${requiredTables.length} Supabase table references and ${requiredRpcs.length} RPC references.`);
+console.log("Checked username/password registration and the protected server-side auth function.");
 if (warnings.length) for (const warning of warnings) console.warn(`WARNING: ${warning}`);
 
 if (errors.length) {

@@ -488,9 +488,9 @@ const _sv=save;let svt=0;save=function(){clearTimeout(svt);svt=setTimeout(_sv,15
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(saveTimer); flushSave(); } });
 
   function publicPlayerTag(email, userId) {
-    // Keep real email addresses private in public rooms, chat and leaderboards.
+    // Keep account identifiers private in public rooms, chat and leaderboards.
     const localPart = String(email || '').split('@')[0];
-    const safeName = localPart.normalize('NFKD').replace(/[^a-z0-9_]/gi, '').toLowerCase().slice(0, 12) || 'player';
+    const safeName = localPart.normalize('NFKD').replace(/[^a-z0-9_-]/gi, '').toLowerCase().slice(0, 12) || 'player';
     const suffix = String(userId || '').replace(/[^a-z0-9]/gi, '').slice(-6).toLowerCase() || Math.random().toString(36).slice(2, 8);
     return `${safeName}_${suffix}`.slice(0, 20);
   }
@@ -506,13 +506,13 @@ const _sv=save;let svt=0;save=function(){clearTimeout(svt);svt=setTimeout(_sv,15
       return 'Supabase default email delivery only allows approved team addresses. Configure custom SMTP in Supabase to send confirmation emails to normal players.';
     }
     if (/invalid login credentials|invalid_credentials/.test(msg)) {
-      return 'Email or password is incorrect. Check both, and make sure you have confirmed your email after registering.';
+      return 'Username/email or password is incorrect. Check your spelling and try again.';
     }
     if (/email not confirmed|email_not_confirmed/.test(msg)) {
-      return 'This email is not confirmed yet. Open the confirmation link sent to your inbox, then sign in again.';
+      return 'This older email account is not confirmed yet. Complete its existing email verification once, then sign in again.';
     }
     if (/user already registered|already been registered/.test(msg)) {
-      return 'This email already has an account. Switch to Sign in. If it is still unconfirmed, use Resend confirmation after the email service is working.';
+      return 'That account already exists. Switch to Sign in and use the same username and password.';
     }
     if (/password.*(weak|short)|weak_password/.test(msg)) {
       return 'Choose a stronger password with at least 8 characters.';
@@ -530,134 +530,170 @@ const _sv=save;let svt=0;save=function(){clearTimeout(svt);svt=setTimeout(_sv,15
     const overlay = document.createElement('div');
     overlay.id = 'parl-auth';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#0b0e14ee;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
-    overlay.innerHTML = `<form id="parl-auth-form" class="pn" style="width:min(390px,100%);padding:18px">
-      <h3 style="font-size:18px">Parliamentum — player account</h3>
-      <div class="mu" style="margin:6px 0 10px">Use your real email address to register and sign in. Your campaign save follows your account across devices.</div>
-      <label for="parl-email">Email address</label><input id="parl-email" type="email" autocomplete="email" inputmode="email" maxlength="254" required placeholder="you@example.com" spellcheck="false" style="width:100%;margin:4px 0 9px">
-      <label for="parl-pass">Password</label><input id="parl-pass" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters" style="width:100%;margin:4px 0 10px">
-      <button id="parl-auth-submit" type="submit" style="width:100%;padding:9px">Sign in</button>
-      <button id="parl-auth-toggle" type="button" style="width:100%;margin-top:5px">Create an account</button>
-      <button id="parl-auth-resend" type="button" hidden style="width:100%;margin-top:5px">Resend confirmation email</button>
-      <div id="parl-auth-error" role="alert" aria-live="polite" style="color:#e58b81;min-height:34px;margin-top:8px"></div>
-      <div id="parl-auth-note" class="mu" style="font-size:12px;margin-top:5px">Your email is used for login and verification. Other players see an automatically generated player tag, not your email. Passwords are handled by Supabase Auth.</div>
-      <div style="border-top:1px solid #2a3144;margin-top:12px;padding-top:10px">
-        <div class="mu" style="font-size:12px;margin-bottom:5px">Offline solo mode works without Supabase. Offline saves stay on this device.</div>
-        <button id="parl-offline" type="button" style="width:100%">Play offline / solo</button>
-      </div>
-    </form>`;
+    overlay.innerHTML = '<form id="parl-auth-form" class="pn" style="width:min(390px,100%);padding:18px">' +
+      '<h3 style="font-size:18px">Parliamentum — player account</h3>' +
+      '<div class="mu" style="margin:6px 0 10px">Create an account with a username and password. No email address is needed.</div>' +
+      '<label id="parl-identifier-label" for="parl-identifier">Username</label>' +
+      '<input id="parl-identifier" type="text" autocomplete="username" maxlength="254" required placeholder="Your username" spellcheck="false" style="width:100%;margin:4px 0 9px">' +
+      '<label for="parl-pass">Password</label>' +
+      '<input id="parl-pass" type="password" autocomplete="current-password" minlength="8" maxlength="128" required placeholder="At least 8 characters" style="width:100%;margin:4px 0 10px">' +
+      '<button id="parl-auth-submit" type="submit" style="width:100%;padding:9px">Sign in</button>' +
+      '<button id="parl-auth-toggle" type="button" style="width:100%;margin-top:5px">Create an account</button>' +
+      '<div id="parl-auth-error" role="alert" aria-live="polite" style="color:#e58b81;min-height:34px;margin-top:8px"></div>' +
+      '<div id="parl-auth-note" class="mu" style="font-size:12px;margin-top:5px">Use your username and password. Existing email accounts can still sign in with their email address.</div>' +
+      '<div style="border-top:1px solid #2a3144;margin-top:12px;padding-top:10px">' +
+        '<div class="mu" style="font-size:12px;margin-bottom:5px">Offline solo mode works without Supabase. Offline saves stay on this device.</div>' +
+        '<button id="parl-offline" type="button" style="width:100%">Play offline / solo</button>' +
+      '</div>' +
+    '</form>';
     document.body.appendChild(overlay);
+
     let mode = 'signin';
     const form = $('parl-auth-form');
     const toggle = $('parl-auth-toggle');
     const submit = $('parl-auth-submit');
-    const emailField = $('parl-email');
+    const identifierField = $('parl-identifier');
+    const identifierLabel = $('parl-identifier-label');
     const passwordField = $('parl-pass');
-    const resend = $('parl-auth-resend');
     const err = $('parl-auth-error');
     const note = $('parl-auth-note');
+    const usernamePattern = /^[a-zA-Z0-9_-]{3,20}$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const setMode = nextMode => {
       mode = nextMode;
       submit.textContent = mode === 'signin' ? 'Sign in' : 'Create account';
       toggle.textContent = mode === 'signin' ? 'Create an account' : 'I already have an account';
+      identifierLabel.textContent = mode === 'signin' ? 'Username or email' : 'Choose a username';
+      identifierField.placeholder = mode === 'signin' ? 'Username (or existing email)' : '3–20 letters, numbers, _ or -';
+      identifierField.maxLength = mode === 'signin' ? 254 : 20;
       passwordField.autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
-      resend.hidden = true;
+      identifierField.value = '';
+      passwordField.value = '';
       err.textContent = '';
-      note.textContent = mode === 'signup'
-        ? 'Enter an email address you can open. Supabase may send a verification link before the account can sign in.'
-        : 'Your email is used for login and verification. Other players see an automatically generated player tag, not your email.';
+      note.textContent = mode === 'signin'
+        ? 'Sign in with your username and password. Existing email accounts can still use their email and password.'
+        : 'No email or verification link. Choose a unique username and keep your password safe; email-based password recovery is not available.';
+      identifierField.focus();
     };
 
-    if (!configured) {
+    if (!configured || !client) {
       err.textContent = 'Cloud accounts are not configured. You can still play offline / solo.';
       note.textContent = 'The Supabase project URL or public anon key is missing or invalid in PARLIAMENTUM_CONFIG.';
     }
+
     toggle.addEventListener('click', () => setMode(mode === 'signin' ? 'signup' : 'signin'));
     $('parl-offline').addEventListener('click', () => {
-      state.offline = true; window.PARL_OFFLINE = true; window.PARL_HAS_SAVE = !!localStorage.getItem('parl1');
-      overlay.remove(); render();
-    });
-
-    resend.addEventListener('click', async () => {
-      const email = emailField.value.trim().toLowerCase();
-      if (!emailField.checkValidity() || !email) { err.textContent = 'Enter a valid email address first.'; emailField.focus(); return; }
-      resend.disabled = true;
-      try {
-        const { error } = await client.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } });
-        if (error) throw error;
-        err.style.color = '#78c58b';
-        err.textContent = 'A new confirmation email was requested. Check your inbox and spam folder.';
-      } catch (e) {
-        err.style.color = '#e58b81';
-        err.textContent = authErrorMessage(e);
-      } finally { resend.disabled = false; }
+      state.offline = true;
+      window.PARL_OFFLINE = true;
+      window.PARL_HAS_SAVE = !!localStorage.getItem('parl1');
+      overlay.remove();
+      render();
     });
 
     form.addEventListener('submit', async event => {
       event.preventDefault();
       err.style.color = '#e58b81';
       err.textContent = '';
-      if (!configured || !client) { err.textContent = 'Cloud login is unavailable. Use offline mode or configure Supabase first.'; return; }
-      const email = emailField.value.trim().toLowerCase();
+      if (!configured || !client) {
+        err.textContent = 'Cloud login is unavailable. Use offline mode or configure Supabase first.';
+        return;
+      }
+
+      const identifier = identifierField.value.trim();
+      const normalized = identifier.toLowerCase();
+      const isEmail = normalized.includes('@');
       const password = passwordField.value;
-      if (!emailField.checkValidity() || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = 'Enter a valid email address, such as you@example.com.'; emailField.focus(); return; }
-      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; passwordField.focus(); return; }
-      submit.disabled = true; toggle.disabled = true; resend.disabled = true;
+
+      if (mode === 'signup') {
+        if (!usernamePattern.test(identifier)) {
+          err.textContent = 'Choose a username with 3–20 letters, numbers, underscores or hyphens.';
+          identifierField.focus();
+          return;
+        }
+      } else if (isEmail) {
+        if (!emailPattern.test(normalized)) {
+          err.textContent = 'Enter a valid email address or a 3–20 character username.';
+          identifierField.focus();
+          return;
+        }
+      } else if (!usernamePattern.test(identifier)) {
+        err.textContent = 'Enter a valid username (3–20 letters, numbers, underscores or hyphens).';
+        identifierField.focus();
+        return;
+      }
+
+      if (password.length < 8 || password.length > 128) {
+        err.textContent = 'Password must be between 8 and 128 characters.';
+        passwordField.focus();
+        return;
+      }
+
+      submit.disabled = true;
+      toggle.disabled = true;
       try {
+        let authEmail;
         if (mode === 'signup') {
-          const { data, error } = await client.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { display_name: publicPlayerTag(email, '') },
-              emailRedirectTo: window.location.origin
-            }
+          const username = normalized;
+          const { error: registrationError } = await client.functions.invoke('register-player', {
+            body: { username, password }
           });
-          if (error) throw error;
-          if (!data.session) {
-            // Hosted Supabase projects normally require email confirmation.
-            // Do not treat this expected response as an authentication failure.
-            setMode('signin');
-            passwordField.value = '';
-            resend.hidden = false;
-            err.style.color = '#78c58b';
-            err.textContent = `Registration started for ${email}. Confirm the link in your inbox, then sign in here.`;
-            note.textContent = 'No confirmation email? Check spam. If Supabase reports an email rate limit, the project owner must configure custom SMTP before another email can be sent.';
-            emailField.value = email;
-            return;
+          if (registrationError) {
+            const status = Number(registrationError.context?.status || 0);
+            if (status === 409) throw new Error('That username is already taken. Choose another one.');
+            if (status === 404) throw new Error('Username registration is not deployed to the connected Supabase project yet.');
+            throw new Error(registrationError.message || 'Could not create your account. Try again.');
           }
-          state.user = data.user || data.session.user;
+          authEmail = username + '@players.parliamentum.invalid';
         } else {
-          const { data, error } = await client.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          state.user = data.user || data.session?.user || null;
+          authEmail = isEmail ? normalized : normalized + '@players.parliamentum.invalid';
         }
 
-        if (!state.user?.id) throw new Error('Supabase did not return a signed-in user. Confirm your email and try signing in again.');
-        const { data: existing, error: readError } = await client.from('profiles').select('user_id,username,party,colour').eq('user_id', state.user.id).maybeSingle();
+        const { data, error } = await client.auth.signInWithPassword({ email: authEmail, password });
+        if (error) throw error;
+        state.user = data.user || data.session?.user || null;
+
+        if (!state.user?.id) throw new Error('Supabase did not return a signed-in user. Please try again.');
+        const displayName = String(
+          state.user.user_metadata?.username ||
+          state.user.user_metadata?.display_name ||
+          (isEmail ? normalized.split('@')[0] : normalized)
+        );
+        const { data: existing, error: readError } = await client.from('profiles')
+          .select('user_id,username,party,colour')
+          .eq('user_id', state.user.id)
+          .maybeSingle();
         if (readError) throw readError;
+
         if (existing) {
           state.profile = existing;
         } else {
-          const username = publicPlayerTag(email, state.user.id);
-          const { data: created, error: createError } = await client.from('profiles').insert({ user_id: state.user.id, username, party: 'Independent', colour: '#38bdf8' }).select('user_id,username,party,colour').single();
+          const username = publicPlayerTag(displayName, state.user.id);
+          const { data: created, error: createError } = await client.from('profiles')
+            .insert({ user_id: state.user.id, username, party: 'Independent', colour: '#38bdf8' })
+            .select('user_id,username,party,colour')
+            .single();
           if (createError) throw createError;
           state.profile = created;
         }
-        state.offline = false; window.PARL_OFFLINE = false;
+
+        state.offline = false;
+        window.PARL_OFFLINE = false;
         await loadCloudSave();
         passwordField.value = '';
-        overlay.remove(); render();
+        overlay.remove();
+        render();
         await resumeRoom();
       } catch (e) {
-        state.user = null; state.profile = null;
-        try { await client.auth.signOut({ scope:'local' }); } catch (_) {}
+        state.user = null;
+        state.profile = null;
+        try { await client.auth.signOut({ scope: 'local' }); } catch (_) {}
         err.style.color = '#e58b81';
         err.textContent = authErrorMessage(e);
-        if (/already has an account/i.test(err.textContent)) resend.hidden = false;
       } finally {
         passwordField.value = '';
-        submit.disabled = false; toggle.disabled = false; resend.disabled = false;
+        submit.disabled = false;
+        toggle.disabled = false;
       }
     });
   }
@@ -1000,7 +1036,7 @@ const _sv=save;let svt=0;save=function(){clearTimeout(svt);svt=setTimeout(_sv,15
       <div class="pn"><h3>Chat · Realtime</h3><select id="mp-chat-channel" onchange="MP.chatMode()"><option value="room" ${state.chatChannel==='room'?'selected':''}>Room</option><option value="global" ${state.chatChannel==='global'?'selected':''}>Global</option><option value="party" ${state.chatChannel==='party'?'selected':''}>Party</option><option value="dm" ${state.chatChannel==='dm'?'selected':''}>Private DM</option></select><select id="mp-chat-target" style="${state.chatChannel==='dm'?'':'display:none'}">${targetOptions}</select><div style="height:170px;overflow:auto;margin:5px 0;padding:5px;background:#0e1118;border:1px solid #2a3144;border-radius:4px">${messages}</div><input id="mp-message" maxlength="300" placeholder="Message (300 characters max)" style="width:100%" onkeydown="if(event.key==='Enter')MP.sendChat()"><button onclick="MP.sendChat()">Send</button><div class="mu">HTML is escaped. Chat is limited to 8 messages per minute per player.</div></div>      <div class="pn"><h3>Server-validated gifts and deals</h3><select id="mp-target">${targetOptions}</select><div style="margin:4px 0"><input id="mp-gift-amount" type="number" min="1" max="50000" value="100" style="width:85px"><button onclick="MP.gift()">Send gift</button> <span class="mu">Wallet starts at $300 per room.</span></div><select id="mp-deal-kind"><option value="coalition">Coalition offer</option><option value="alliance">Alliance</option><option value="trade">Trade</option></select><input id="mp-offer-cash" type="number" min="0" max="50000" value="0" placeholder="Offer $" style="width:90px"><input id="mp-request-cash" type="number" min="0" max="50000" value="0" placeholder="Request $" style="width:90px"><input id="mp-deal-note" maxlength="300" placeholder="Deal terms" style="width:100%;margin:4px 0"><button onclick="MP.proposeDeal()">Propose deal</button>${deals}</div>
       <div class="pn"><h3>Human parliamentary voting</h3><input id="mp-bill-title" maxlength="100" placeholder="Bill title" style="width:68%"><input id="mp-bill-days" type="number" min="1" max="30" value="6" style="width:48px"><button onclick="MP.proposeBill()">Table bill</button>${openBills}</div>
       <div class="pn"><h3>Shared diplomacy and news</h3><input id="mp-diplomacy-note" maxlength="250" placeholder="Describe a relation, sanction, election or action" style="width:100%"><label class="mu">Relation score −100 to +100 <input id="mp-rel-score" type="number" min="-100" max="100" value="0" style="width:75px"></label><button onclick="MP.share('relations')">Publish relations</button><button onclick="MP.share('sanctions')">Publish sanctions</button><button onclick="MP.share('lift-sanctions')">Lift sanction</button><button onclick="MP.share('elections')">Publish election</button>${shared}</div>
-      <div class="pn"><h3>Account</h3>${esc(state.user.email || 'Signed in')} · ${esc(state.profile.party)}<br><span class="mu">Public player tag: ${esc(state.profile.username)}</span><br><button onclick="MP.offline()">Switch to offline solo</button><button onclick="MP.logout()">Log out</button><div class="mu">Your email is your private login. The public player tag is shown to other players. Sign in again after a new page visit.</div></div>
+      <div class="pn"><h3>Account</h3>${esc(state.profile.username || state.user.user_metadata?.username || 'Player')} · ${esc(state.profile.party)}<br><span class="mu">Public player tag: ${esc(state.profile.username)}</span><br><button onclick="MP.offline()">Switch to offline solo</button><button onclick="MP.logout()">Log out</button><div class="mu">New accounts use a username and password, not an email address. Keep your password safe: email-based password recovery is not available. Sign in again after a new page visit.</div></div>
     </div>`;
   }
 
