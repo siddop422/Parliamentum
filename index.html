@@ -1,0 +1,973 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Parliamentum: Seats of Power</title><style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{background:#0e1118}body{margin:0;color:#e6e1d3;font:14px/1.45 Georgia,'Times New Roman',serif}
+button{background:#1d2433;color:#e6e1d3;border:1px solid #3a4560;padding:5px 9px;border-radius:4px;cursor:pointer;font:inherit;font-size:12px;margin:2px}button:hover,button:focus-visible{border-color:#c9a24b;outline:none}
+input{background:#1d2433;color:#e6e1d3;border:1px solid #3a4560;padding:5px;border-radius:4px}
+.pn{background:#161b26;border:1px solid #2a3144;border-radius:6px;padding:10px;margin:6px 0}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px}
+h3{margin:0 0 6px;color:#c9a24b;font-weight:normal;letter-spacing:.05em;font-size:15px}h1{color:#c9a24b;font-weight:normal;letter-spacing:.1em}.mu{color:#8b8fa0}u{cursor:pointer;text-decoration:none;border-bottom:1px dotted #8b8fa0}
+.bar{height:6px;background:#2a3144;border-radius:3px;margin:2px 0}.bar i{display:block;height:6px;border-radius:3px;background:#c9a24b}
+#top{position:sticky;top:0;background:#0b0e14;border-bottom:1px solid #2a3144;padding:6px 10px;z-index:5}#nav button{padding:4px 7px}.on{background:#c9a24b!important;color:#111!important}
+#main{padding:6px 10px;max-width:1100px;margin:auto}#toast{color:#c9a24b;min-height:18px}.nw{border-bottom:1px solid #222a3a;padding:3px 0}body{background:radial-gradient(1200px 500px at 50% -10%,#1a2236,#0e1118 70%) fixed}.pn{background:linear-gradient(180deg,#1a2030,#141926);box-shadow:0 2px 10px #0006}h3{border-bottom:1px solid #2a3144;padding-bottom:4px}button{transition:background .15s,border-color .15s}button:hover{background:#26304a}#top{box-shadow:0 2px 12px #000a}.tk{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c9a24b;font-style:italic;font-size:13px;margin:3px 0}.chip{display:inline-block;background:#1d2433;border:1px solid #2a3144;border-radius:10px;padding:1px 8px;margin:1px;font-size:12px}.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4caf70;animation:pl 1.2s infinite}@keyframes pl{50%{opacity:.25}}@media(prefers-reduced-motion:reduce){.live{animation:none}}@media(max-width:600px){body{font-size:13px}.g{grid-template-columns:1fr}}
+svg path{shape-rendering:optimizeSpeed}.pn{contain:layout style}</style></head><body><div id="top"></div><div id="main"></div><script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2"></script><script>window.PARLIAMENTUM_CONFIG=window.PARLIAMENTUM_CONFIG||{supabaseUrl:"https://wbyjqdwmmtznlobsfhck.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndieWpxZHdtbXR6bmxvYnNmaGNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNTIwMDYsImV4cCI6MjExMDkyODAwNn0.fOiNiPHOrtK1IUua__i1SZJzcR92_lMUzOKjqyXaf4k"};</script><script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0"></script><script>
+const R=Math.random,ri=(a,b)=>a+Math.floor(R()*(b-a+1)),pk=a=>a[ri(0,a.length-1)],cl=(v,a,b)=>Math.max(a,Math.min(b,v)),$=i=>document.getElementById(i);
+const FN='Alma,Bruno,Cecil,Dara,Edric,Farah,Gideon,Hana,Ivor,Jena,Kofi,Lena,Marek,Nadia,Osric,Petra,Quinn,Rhea,Soren,Talia,Ulric,Vera,Wren,Yusuf'.split(','),LN='Ashdown,Bell,Cortez,Dunmore,Eriksen,Fairley,Grayson,Hale,Ibarra,Jorvik,Kessler,Lovell,Marsh,Novak,Okoye,Pryce,Rowan,Sato,Thorne,Voss,Whitlock,Yates'.split(',');
+const PT=['honest','ambitious','corrupt','manipulative','aggressive','diplomatic','opportunistic'],OB=['wealth','post','leader','ideology','revenge'],DT=['taking gifts from a lobbyist','falsifying expense claims','hiding an offshore account','plagiarising a thesis','secretly meeting a foreign envoy','nepotism in hiring'];
+const PD=[{n:'Civic Union',c:'#3b6fd9',e:-.7,s:-.3},{n:'Green Horizon',c:'#4caf70',e:-.4,s:-.7},{n:'Centrist Alliance',c:'#e0b84a',e:0,s:0},{n:'Liberty Party',c:'#d9534f',e:.6,s:-.4},{n:'Heritage Front',c:'#9b2226',e:.5,s:.7}];
+const PARTY_LIB=[
+{n:'Reform League',c:'#14b8a6',e:.2,s:-.1},{n:'Labour Coalition',c:'#e11d48',e:-.8,s:-.1},{n:'Federalist Party',c:'#6366f1',e:-.1,s:-.2},
+{n:'National Renewal',c:'#f97316',e:.4,s:.6},{n:'Social Democrats',c:'#ec4899',e:-.5,s:-.4},{n:'Constitutional Bloc',c:'#8b5cf6',e:.5,s:.3},
+{n:'People\'s Forum',c:'#06b6d4',e:-.6,s:.2},{n:'Free Market Union',c:'#f59e0b',e:.8,s:-.5},{n:'Christian Democrats',c:'#38bdf8',e:.1,s:.5},
+{n:'Eco-Socialist Front',c:'#22c55e',e:-.85,s:-.7},{n:'Populist Movement',c:'#fb7185',e:-.2,s:.65},{n:'Technocratic Party',c:'#a3e635',e:.15,s:-.6},
+{n:'Agrarian Alliance',c:'#84cc16',e:.25,s:.45},{n:'Progressive Congress',c:'#c084fc',e:-.65,s:-.6},{n:'Patriot League',c:'#b91c1c',e:.45,s:.8},
+{n:'Digital Future',c:'#2dd4bf',e:.1,s:-.75},{n:'Workers\' Solidarity',c:'#ef4444',e:-.9,s:.1},{n:'Commonwealth Party',c:'#0ea5e9',e:-.15,s:.1},
+{n:'Frontier Democrats',c:'#eab308',e:.35,s:-.25},{n:'Unity Coalition',c:'#818cf8',e:0,s:.05},{n:'Sovereign Front',c:'#dc2626',e:.6,s:.75},
+{n:'Modernist Party',c:'#34d399',e:.05,s:-.55},{n:'Taxpayer Alliance',c:'#facc15',e:.85,s:.15},{n:'Civic Action',c:'#60a5fa',e:-.35,s:-.25},
+{n:'Heartland Bloc',c:'#d97706',e:.3,s:.55},{n:'New Republic',c:'#a78bfa',e:-.25,s:-.45},{n:'Justice Movement',c:'#f43f5e',e:-.75,s:-.35},
+{n:'Enterprise Party',c:'#fb923c',e:.75,s:-.2},{n:'Traditionalist Union',c:'#991b1b',e:.4,s:.85},{n:'Open Society Party',c:'#22d3ee',e:-.1,s:-.85}
+];
+const PN_A='National,Reform,Democratic,Progressive,United,Federal,Social,People\'s,Constitutional,Civic,Liberal,Conservative,Populist,Commonwealth,Frontier,Future,Solidarity,Sovereign,Modern,Regional'.split(',');
+const PN_B='Party,Alliance,Coalition,Front,League,Union,Movement,Congress,Bloc,Forum,Network,Initiative'.split(',');
+const PCOL='#14b8a6,#f97316,#ec4899,#6366f1,#06b6d4,#84cc16,#f43f5e,#a855f7,#eab308,#22c55e,#38bdf8,#fb7185'.split(',');
+function spawnParty(){if(G.P.filter(p=>!p.dead).length>=9)return;const used=new Set(G.P.map(p=>p.n));let tpl=pk(PARTY_LIB.filter(x=>!used.has(x.n)));if(!tpl){let nm='';for(let k=0;k<12;k++){const c=pk(PN_A)+' '+pk(PN_B);if(!used.has(c)){nm=c;break}}if(!nm)return;tpl={n:nm,c:pk(PCOL),e:+((R()-.5)*1.7).toFixed(2),s:+((R()-.5)*1.7).toFixed(2)}}
+const id=G.P.length,np={...tpl,id,pop:ri(6,11),sat:60,lead:null,bias:RG.map(()=>ri(-6,6)),dead:0};G.P.push(np);if(G.ST)for(const c in G.ST)G.ST[c].off.push((R()-.5)*4);
+const def=act().filter(m=>m.id!=G.mid&&G.P[m.p].lead!=m.id&&dist(m,np)<.95).sort((a,b)=>dist(a,np)-dist(b,np)).slice(0,ri(1,2));
+def.forEach(m=>{m.p=id;mem(m,'founded '+np.n)});if(!def.length){const n=mk(id,ri(30,80));n.rv=pk(act()).id;n.al=pk(act()).id}
+leaders();norm();news(`NEW PARTY: ${np.n} launches with ${mp(np.lead)?mp(np.lead).n+' at the helm':'grassroots backing'} (${np.pop.toFixed(0)}% initial polling).`);T('New party formed: '+np.n)}
+const RG=['Pacific West','Mountain West','Great Plains','Midwest','South','Northeast'];
+const BT=[['Raise income tax',-.6,0,{tax:3,appr:-3}],['Cut income tax',.6,0,{tax:-3,appr:3,gdp:.3}],['Fund public healthcare',-.5,-.1,{serv:8,appr:3}],['Privatise the railways',.7,0,{serv:-5,tax:-1,gdp:.2}],['Carbon levy',-.2,-.7,{tax:1,gdp:-.3,appr:-1}],['Border control act',.1,.8,{appr:2}],['Civil liberties charter',0,-.8,{appr:1}],['Minimum wage rise',-.6,-.2,{un:.4,appr:2}],['Stimulus package',-.3,0,{gdp:.6,tax:1.5,appr:2}],['Austerity budget',.6,.1,{serv:-8,tax:-2,appr:-4}],['Police funding surge',.2,.7,{serv:3,appr:1}],['Anti-corruption commission',0,-.1,{appr:2}],['Universal childcare act',-.6,-.3,{serv:6,tax:2,appr:3}],['Corporate tax cut',.8,-.1,{tax:-2,gdp:.5,appr:-1}],['Green energy transition',-.3,-.8,{gdp:.2,tax:1,appr:2}],['Defence modernisation',.3,.6,{tax:2,serv:2,appr:1}],['Trade & tariff reform',.5,.2,{gdp:.4,appr:1}],['National housing bill',-.5,-.2,{serv:5,tax:1,appr:3}],['AI & tech regulation',-.2,-.3,{appr:1,gdp:-.1}],['Electoral reform act',-.1,-.6,{appr:2}]];
+const OBJ=[['Become Prime Minister',()=>G.gov&&G.gov.pm==G.mid],['Amass $2,000',()=>G.cash>=2000],['Pass 3 of your own bills',()=>G.passed>=3],['Break 2 promises yet keep reputation ≥ 40',()=>G.broke>=2&&G.rep>=40],['Drive a rival party below 12% support',()=>G.P.some(p=>p.id!=me().p&&p.pop<12)],['Lead your party',()=>G.P[me().p].lead==G.mid]];
+let G=null,cfg={mode:'career',party:2},H={};
+const mp=i=>G.M.find(m=>m.id==i),me=()=>mp(G.mid),act=()=>G.M.filter(m=>!m.out),sOf=p=>act().filter(m=>m.p==p).length,inGov=p=>G.gov&&G.gov.p.includes(p),maj=()=>Math.floor(act().length/2)+1;
+const dist=(a,b)=>Math.abs(a.e-b.e)+Math.abs(a.s-b.s),nm=m=>m?`<u onclick="D('sel',${m.id})" style="color:${G.P[m.p].c}">${m.n}</u>`:'—';
+const news=t=>{G.news.unshift({d:G.day,t});G.news.length>70&&G.news.pop()},T=t=>{$('toast')&&($('toast').textContent=t)},mem=(m,t)=>{m.mem.unshift('Day '+G.day+': '+t);m.mem.length>8&&m.mem.pop()};
+const spend=n=>G.ip<n?(T('Not enough influence'),0):(G.ip-=n,1),pay=n=>G.cash<n?(T('Not enough funds'),0):(G.cash-=n,1);
+function D(t,...a){G.al.push([G.day,t,a]);G.al.length>200&&G.al.shift();H[t](...a);render()}
+function norm(){const s=G.P.reduce((a,p)=>a+(p.dead?0:p.pop),0)||1;G.P.forEach(p=>{p.pop=p.dead?0:Math.max(2,p.pop*100/s)})}
+function alloc(){const tot=G.P.map(()=>0),reg=[];RG.forEach((r,x)=>{const sup=G.P.map(p=>p.dead?0:Math.max(1,p.pop+p.bias[x])),st=G.P.map(()=>0);for(let k=0;k<10;k++){let b=0,bv=-1;sup.forEach((v,i)=>{const q=v/(st[i]+1);q>bv&&(bv=q,b=i)});st[b]++}st.forEach((v,i)=>tot[i]+=v);reg.push({st,sup})});return{tot,reg}}
+function mk(p,rank){const P=G.P[p],m={id:G.uid++,n:pk(FN)+' '+pk(LN),p,e:cl(P.e+(R()-.5)*.5,-1,1),s:cl(P.s+(R()-.5)*.5,-1,1),pers:pk(PT),amb:R(),rel:ri(-10,15),mem:[],cash:ri(0,150),post:'',rank,rep:50,dirt:R()<.3?pk(DT):'',known:0,obj:pk(OB),bought:0,black:0,deal:-1,scam:0,rv:-1,al:-1};G.M.push(m);return m}
+function pickL(p,ex){return act().filter(m=>m.p==p&&m!==ex).sort((a,b)=>(b.amb*30+b.rep)-(a.amb*30+a.rep))[0]}
+function leaders(){G.P.forEach(p=>{if(p.dead){p.lead=null;return}const l=mp(p.lead);if(!l||l.p!=p.id||l.out){const n=pickL(p.id);p.lead=n?n.id:null}})}
+function formGov(seed){const ord=G.P.map(p=>p.id).filter(i=>sOf(i)>0).sort((a,b)=>sOf(b)-sOf(a));for(const a of(seed!=null?[seed]:ord)){const ps=[a];let t=sOf(a);G.P.filter(p=>p.id!=a&&sOf(p.id)>0).sort((x,y)=>dist(x,G.P[a])-dist(y,G.P[a])).forEach(o=>{t<maj()&&(ps.push(o.id),t+=sOf(o.id))});if(t>=maj()){G.gov={p:ps,pm:G.P[a].lead};ps.forEach(i=>G.P[i].sat=60);news(`${mp(G.gov.pm).n} (${G.P[a].n}) forms a ${ps.length>1?ps.length+'-party coalition':'single-party'} government with ${t} seats.`);return 1}}
+if(seed==null){const a=ord[0];G.gov={p:[a],pm:G.P[a].lead};news(`${mp(G.gov.pm).n} leads a minority government of ${G.P[a].n}.`);return 1}return 0}
+function newGame(){const mode=cfg.mode,cust=cfg.party==-1,pi=cust?PD.length:cfg.party,baseP=cust?[...PD,{n:(($('cparty')||{}).value||'').trim()||'New Horizon',c:($('ccol')||{}).value||'#38bdf8',e:0,s:0}]:PD;G={mode,day:1,nextElec:120,uid:1,P:baseP.map((p,i)=>({...p,id:i,pop:(cust?[22,9,24,18,17,10]:[24,10,28,20,18])[i]+ri(-3,3),sat:60,lead:null,bias:RG.map(()=>ri(-6,6)),dead:0})),M:[],news:[],prom:[],offers:[],bills:[],tab:0,sel:null,al:[],eco:{gdp:2,un:6,inf:3,debt:60,bal:-1,serv:50,tax:30,appr:50},ip:12,cash:300,rep:55,scand:0,gov:null,hist:[],passed:0,broke:0,elections:0,victory:0,objs:[],done:[],pn:($('pname')||{}).value||pk(FN)+' '+pk(LN)};norm();
+const s=alloc();G.P.forEach((p,i)=>{for(let k=0;k<s.tot[i];k++)mk(i,ri(0,100))});
+const m=act().filter(x=>x.p==pi).sort((a,b)=>b.rank-a.rank)[0];G.mid=m.id;m.n=G.pn;m.rank=60;m.rel=0;m.dirt='';m.pers='—';m.mem=[];leaders();if(mode!='career')G.P[pi].lead=m.id;
+act().forEach(x=>{x.rv=pk(act()).id;x.al=pk(act()).id});formGov();
+G.objs=[...OBJ.keys()].sort(()=>R()-.5).slice(0,3);if(mode=='sandbox'){G.cash=5000;G.ip=25}
+news(`${G.pn} takes a seat for ${G.P[pi].n}. The ${mode=='career'?'backbenches':'party leadership'} await.`);G.hist.push({d:1,a:50,p:G.P.map(p=>p.pop)});G.spd=1;save();render()}
+function sc(m,b){let v=1-dist(m,b)*1.1+(b.sp||0)*.5+(b.wl&&b.wl.p==m.p?b.wl.d*1.2:0);v*=m.pers=='honest'?1.4:m.pers=='opportunistic'?.7:1;const g=inGov(m.p);if(b.by=='gov'){v+=g?.7:-.4;v+=m.rel/300;if(m.pers=='aggressive'&&!g)v-=.5}else if(b.by=='me')v+=m.rel/80+(m.p==me().p?.3:0);if(m.bought>0&&!m.scam)v+=1.6;if(m.black>0)v+=2;if(b.by=='ai')v+=(m.p==b.ap?.8:0)+(m.al==b.au?.5:0)-(m.rv==b.au?.5:0);return v+(R()-.5)*.3}
+function resolve(b,my){const mm=me();let y=0,n=0,bet=[];const votes=act().map(m=>{let v;if(m.id==G.mid)v=my==null?sc(m,b)>0:my;else{let s=sc(m,b);if(m.deal==b.id){if(R()<({honest:.95,diplomatic:.8,ambitious:.6}[m.pers]||.45))s+=2.5;else{s-=1.5;bet.push(m)}}v=s>0}v?y++:n++;return[m,v]});
+const pass=y>n;if(b.budget&&!pass){news('The Budget is defeated '+y+'–'+n+' — the government falls!');G.bills=G.bills.filter(x=>x!=b);G.gov=null;election();return}news(`The ${b.t} bill ${pass?'passes':'is defeated'} ${y}–${n}${b.by=='me'?' (your bill)':''}.`);
+const myv=votes.find(x=>x[0].id==G.mid);bet.forEach(m=>{mem(m,'broke deal');m.rel-=25;news(`${m.n} breaks a secret promise and votes against you.`)});
+if(myv)votes.forEach(([m,v])=>{if(m.bought>0&&m.scam&&v!=myv[1]&&m.id!=G.mid){news(`${m.n} pockets your money and votes the other way.`);mem(m,'took money, ignored it');m.bought=0}});
+if(pass){G.laws=G.laws||[];G.laws.unshift({id:b.id,t:b.t,d:G.day,by:b.by=='gov'?'Government':b.by=='ai'?b.an:G.pn,e:b.e,s:b.s,fx:b.fx});G.laws.length>40&&G.laws.pop();const f=b.fx,e=G.eco,k=b.am?.6:1;f.tax&&(e.tax=cl(e.tax+f.tax*k,15,50));f.serv&&(e.serv=cl(e.serv+f.serv*k,10,100));f.gdp&&(e.gdp+=f.gdp*k);f.un&&(e.un+=f.un*k);f.appr&&(e.appr=cl(e.appr+f.appr*k,5,95));G.P.forEach(p=>{const d=dist(p,b);p.pop+=d<.8?.4:-.25;if(inGov(p.id)&&b.by=='gov')p.sat=cl(p.sat+(d<.9?3:-5),0,100)});norm();if(b.by=='me'){G.passed++;G.rep=cl(G.rep+3,0,100);G.ip+=2}}else if(b.by=='me')G.rep=cl(G.rep-1,0,100);
+if(myv&&b.by=='gov'&&inGov(mm.p)&&!my&&my!=null){G.rep-=1;news(`${mm.n} defies the whip.`)}G.bills=G.bills.filter(x=>x!=b);G.lastVote={t:b.t,y,n,pass}}
+function noconf(by){let ay=0,tot=0;const pm=G.gov.pm==G.mid;act().forEach(m=>{const g=inGov(m.p);let v=g?-1-(G.P[m.p].sat-50)/50-(pm?m.rel/200:0):1;if(m.pers=='opportunistic')v+=G.eco.appr<45?.6:-.2;if(m.bought>0&&!m.scam)v=by=='me'?1:-1;if(m.id==G.mid)v=by=='me'?1:(g?-1:1);tot++;v>0&&ay++});
+const fall=ay>tot/2;news(`No-confidence vote: ${ay} for, ${tot-ay} against — ${fall?'the government FALLS':'the government survives'}.`);if(fall){G.gov=null;if(by=='me'&&G.P[me().p].lead==G.mid&&formGov(me().p))return;election()}else if(by=='gov')G.P.forEach(p=>inGov(p.id)&&(p.sat=Math.min(100,p.sat+8)))}
+function election(){const was=G.gov&&G.gov.pm==G.mid,e=G.eco,sw=(e.appr-50)*.12;G.P.forEach(p=>p.pop+=(G.gov&&inGov(p.id))?sw:-sw*.4);norm();const s=alloc();const mm=me();mm.rank=100-G.rep+ri(-15,15);
+G.P.forEach((p,i)=>{const ms=act().filter(m=>m.p==i).sort((a,b)=>a.rank-b.rank);ms.slice(s.tot[i]).forEach(m=>m.out=1);for(let k=ms.length;k<s.tot[i];k++){const n=mk(i,100+ri(0,50));n.rv=pk(act()).id;n.al=pk(act()).id}});
+G.M=G.M.filter(m=>!m.out||m.id==G.mid);G.P.forEach((p,i)=>{if(!p.dead&&i!=me().p&&s.tot[i]==0&&p.pop<4.5){p.dead=1;p.pop=0;news(`${p.n} dissolves after failing to win a seat.`)}});leaders();G.elections++;G.nextElec=G.day+120;G.bills=[];G.minor=0;const old=G.gov;formGov();
+G.lastElec={d:G.day,res:G.P.filter(p=>!p.dead).map(p=>({n:p.n,c:p.c,st:s.tot[p.id],pop:p.pop})),pm:G.gov&&mp(G.gov.pm)?mp(G.gov.pm).n:'—'};G.pmHist=G.pmHist||[];if(G.gov&&mp(G.gov.pm))G.pmHist.unshift({d:G.day,pm:mp(G.gov.pm).n,p:G.P[mp(G.gov.pm).p].n});
+news(`ELECTION RESULT: ${G.P.map((p,i)=>p.dead?'':p.n+' '+s.tot[i]).filter(Boolean).join(', ')}.`);if(me().out)news(`${G.pn} LOSES their seat!`);
+if(was&&G.gov.pm==G.mid){G.victory=1;news(`${G.pn} wins re-election as Prime Minister!`)}else if(was)news(`${G.pn}'s government is voted out of office.`)}
+function resignL(p){const o=mp(G.P[p].lead),n=pickL(p,o);if(!n)return;G.P[p].lead=n.id;if(G.gov&&G.gov.pm==o.id)G.gov.pm=n.id;news(`${o.n} resigns as ${G.P[p].n} leader; ${n.n} takes over${G.gov&&G.gov.pm==n.id?' and becomes Prime Minister':''}.`)}
+function chal(p){const l=mp(G.P[p].lead),c=pk(act().filter(m=>m.p==p&&m!=l&&m.id!=G.mid));if(!l||!c)return;if(R()*100<c.amb*45+(50-(l.id==G.mid?G.rep:l.rep))*.7){news(`LEADERSHIP COUP: ${c.n} ousts ${l.n} in ${G.P[p].n}.`);G.P[p].lead=c.id;if(G.gov&&G.gov.pm==l.id)G.gov.pm=c.id}else news(`${l.n} sees off a leadership challenge from ${c.n}.`)}
+const CRISES=[
+{t:'Nationwide Rail & Dock Strike',desc:'Unions threaten an indefinite walkout unless pay and conditions improve.',opts:[['Settle with unions (+1% tax, +4% approval)',()=>{G.eco.tax=cl(G.eco.tax+1,15,50);G.eco.appr=cl(G.eco.appr+4,5,95);news('Government settles the rail & dock strike.')}],['Hold firm (−0.4% GDP, −3% approval)',()=>{G.eco.gdp-=.4;G.eco.appr=cl(G.eco.appr-3,5,95);news('Government refuses union demands; strikes drag on.')}]]},
+{t:'Regional Bank Liquidity Crunch',desc:'A mid-sized lender is teetering after bond losses.',opts:[['Emergency bailout (+3% debt, +0.3% GDP)',()=>{G.eco.debt+=3;G.eco.gdp+=.3;news('Treasury backs the regional lender; markets steady.')}],['Let markets absorb losses (−0.5% GDP, +2% approval)',()=>{G.eco.gdp-=.5;G.eco.appr=cl(G.eco.appr+2,5,95);news('Government declines a bailout; markets wobble.')}]]},
+{t:'Coalition Budget Ultimatum',desc:'Backbenchers demand action on public services before the next vote.',opts:[['Boost services (+5 services, +1% tax)',()=>{G.eco.serv=cl(G.eco.serv+5,10,100);G.eco.tax=cl(G.eco.tax+1,15,50);news('Government pledges extra funding for public services.')}],['Pledge fiscal restraint (−4 services, −1% tax)',()=>{G.eco.serv=cl(G.eco.serv-4,10,100);G.eco.tax=cl(G.eco.tax-1,15,50);news('Government sticks to spending caps despite backbench pressure.')}]]}];
+function event(){const e=G.eco,w=pk(act().filter(x=>x.id!=G.mid)),P=G.P[w.p],g=inGov(w.p),k=ri(0,12);
+if(k==0){w.rep-=25;P.pop-=.7;g&&(e.appr-=1.5);news(`SCANDAL: ${w.n} (${P.n}) accused of ${pk(DT)}.`);w.rep<15&&P.lead==w.id&&resignL(w.p)}
+else if(k==1){e.serv<50?(news('Thousands march over crumbling public services.'),e.appr-=2):news(`Trade unions rally against the ${g?'government':'opposition'}.`)}
+else if(k==2){news(`Markets tumble as ${pk(['energy prices spike','a major bank wobbles','exports collapse'])}.`);e.gdp-=.6;e.inf+=.4}
+else if(k==3){news(`Tensions with ${pk(['Valdoria','the Eastern Pact','Karsun'])} dominate headlines.`);e.appr+=1.5;G.P.forEach(p=>{if(!p.dead&&p.s>.3)p.pop+=.4});norm()}
+else if(k==4){w.rep-=15;news(`LEAKED: memo shows ${w.n} lobbying for donors.`)}
+else if(k==5){const c=G.gov&&G.gov.p.filter(i=>i!=mp(G.gov.pm).p);if(c&&c.length){const p=G.P[pk(c)];p.sat-=10;news(`${p.n} MPs rebel against the coalition agenda.`)}}
+else if(k==6){const ap=G.P.filter(p=>!p.dead),a=pk(ap),b=pk(ap);if(a!=b){news(`${a.n} and ${b.n} announce a surprise cooperation pact.`);if(inGov(a.id)&&inGov(b.id)){a.sat+=6;b.sat+=6}}}
+else if(k==7){const cp=G.P.filter(p=>!p.dead&&sOf(p.id)>1);cp.length&&chal(pk(cp).id)}
+else if(k==8){news('Climate demonstrators fill the capital.');const gp=G.P.find(p=>!p.dead&&p.s<-.4)||G.P[0];gp.pop+=.8;norm()}
+else if(k==9){news(`Record exports lift growth.`);e.gdp+=.5;e.appr+=1.5}
+else if(k==10){const on=w.n;if(P.lead==w.id)resignL(w.p);w.n=pk(FN)+' '+pk(LN);w.rel=ri(-10,15);w.mem=[];w.rep=50;w.post='';w.deal=-1;news(`${on} (${P.n}) retires; ${w.n} wins the by-election for the same party.`)}else if(k==11){news(`The Speaker orders ${w.n} from the chamber for disorder.`);w.rep-=4}else if(G.rep>20&&R()<.5){G.rep-=3;news(`Tabloid claims ${G.pn} has been "meeting lobbyists".`)}
+G.crises=G.crises||[];if(G.crises.length<2&&R()<.18){const ci=ri(0,CRISES.length-1),cq=CRISES[ci];G.crises.push({id:G.uid++,t:cq.t,desc:cq.desc,opts:cq.opts.map(o=>o[0]),fn:ci})}}
+function aiAct(m){const l=mp(G.P[m.p].lead),mm=me(),rv=mp(m.rv);if(m.id!=G.mid){if(R()<.04&&G.bills.length<5){const t=pk(BT);G.bills.push({id:G.uid++,t:t[0],e:cl(t[1]+(m.e-t[1])*.3,-1,1),s:t[2],fx:t[3],by:'ai',au:m.id,an:m.n,ap:m.p,dl:G.day+8});news(`${m.n} (${G.P[m.p].n}) tables a private member's bill: ${t[0]}.`);return}
+if(m.pers=='ambitious'&&dist(m,G.P[m.p])>.9&&R()<.1&&G.P[m.p].lead!=m.id){const q=G.P.filter(p=>p.id!=m.p&&sOf(p.id)>0).sort((a,b)=>dist(a,m)-dist(b,m))[0];if(q){news(`${m.n} crosses the floor from ${G.P[m.p].n} to ${q.n}!`);m.p=q.id;mem(m,'crossed the floor');return}}
+if(m.obj=='wealth'&&R()<.03){m.cash+=ri(100,400);if(R()<.2){m.rep-=15;news(`${m.n} is caught taking money from lobbyists.`)}}}
+if(m.obj=='leader'&&l&&l!==m&&R()<.3*m.amb){const t=l.id==G.mid?null:l;t?t.rep-=2:(G.rep-=1.5);R()<.2&&news(`${m.n} is whispering against ${l.n}.`)}
+else if(m.rel<-30&&(m.pers=='manipulative'||m.pers=='aggressive')&&R()<.4){G.rep=cl(G.rep-4,0,100);news(`${m.n} spreads rumours about ${G.pn}.`)}
+else if(rv&&rv.id!=G.mid&&R()<.2){rv.rep-=3}
+else if((m.pers=='corrupt'||m.pers=='opportunistic')&&R()<.25&&G.offers.length<4&&m.id!=G.mid){G.offers.push({id:m.id,cost:ri(80,250)});T('A colleague wants a word: see the Secrets tab')}}
+function govBill(){const t=pk(BT),bd=G.day>30&&G.day%90<12&&!G.bills.some(b=>b.budget);G.bills.push(bd?{id:G.uid++,t:'Annual Budget',e:0,s:0,fx:{tax:pk([-1,0,1]),serv:pk([3,0,-3]),appr:1},by:'gov',dl:G.day+9,budget:1}:{id:G.uid++,t:t[0],e:t[1],s:t[2],fx:t[3],by:'gov',dl:G.day+9})}
+function month(){const e=G.eco;e.gdp=cl(e.gdp+(R()-.5)*.7+(2-e.gdp)*.15-(e.tax-30)*.02+(e.serv-50)*.005,-4,6);e.un=cl(e.un-(e.gdp-1.5)*.35+(R()-.5)*.3,2,20);e.inf=cl(e.inf+(R()-.5)*.5+(e.gdp-2)*.1+(3-e.inf)*.1,0,20);
+e.bal=(e.tax-32)*.5-(e.serv-45)*.12+e.gdp*.3-1;e.debt=Math.max(5,e.debt-e.bal);const t=50+e.gdp*4-(e.un-6)*2.5-(e.inf-3)*1.5+(e.serv-50)*.2-(e.debt>100?5:0);e.appr=cl(e.appr+(t-e.appr)*.35,5,95);
+G.P.forEach(p=>{p.pop+=G.gov&&inGov(p.id)?(e.appr-50)*.02:-(e.appr-50)*.01;inGov(p.id)&&(p.sat=cl(p.sat+((50+(e.appr-50)*.4)-p.sat)*.15,0,100))});VGX();AIGOV();STM();act().filter(x=>x.post&&/Sec|Chan/.test(x.post)).forEach(x=>{const q=(x.rep-50)/120+(x.pers=='honest'?.2:x.pers=='corrupt'?-.25:0);if(x.post=='Chancellor')e.gdp=cl(e.gdp+q*.3,-4,6);else if(x.post=='Health Sec')e.serv=cl(e.serv+q*3,10,100);else e.appr=cl(e.appr+q*2,5,95);if(x.pers=='corrupt'&&R()<.12){x.rep-=15;e.appr-=1.5;news(`MINISTERIAL SCANDAL: ${x.post} ${x.n} faces an ethics inquiry.`)}});norm();const m=me();{const gr=m.out?60:400+(m.post||G.gov.pm==G.mid?300:0),tx=gr*e.tax/100,fx=G.cash*.01-G.cash*e.inf/1200-120;G.cash=Math.max(0,G.cash+gr-tx+fx);G.fin={gr,tx,fx,net:gr-tx+fx};news(`Your month: salary $${Math.round(gr)}, tax −$${Math.round(tx)}, living costs/interest ${fx<0?'−':'+'}$${Math.abs(Math.round(fx))}.`)}
+G.hist.push({d:G.day,a:e.appr,p:G.P.map(p=>p.pop)});G.hist.length>40&&G.hist.shift();news(`Monthly report: growth ${e.gdp.toFixed(1)}%, unemployment ${e.un.toFixed(1)}%, inflation ${e.inf.toFixed(1)}%, government approval ${Math.round(e.appr)}%.`)}
+function tick(){G.day++;G.ip=Math.min(25,G.ip+3);G.bills.forEach(b=>{if(G.day==b.dl-1&&G.spd){T('Division bell: a vote is due tomorrow')}});act().forEach(m=>{m.bought>0&&m.bought--;m.black>0&&m.black--;m.rel=cl(m.rel*.995+(R()-.5)*2,-100,100)});
+G.P.forEach(p=>{if(p.dead)return;p.pop+=(R()-.5)*.25;p.bias=p.bias.map(b=>cl(b+(R()-.5)*.2,-10,10));p.e=cl(p.e+(R()-.5)*.01,-1,1);p.s=cl(p.s+(R()-.5)*.01,-1,1)});norm();if(R()<.015&&G.day>10)spawnParty();
+act().forEach(m=>{const P=G.P[m.p];m.e=cl(m.e+(R()-.5)*.03+(P.e-m.e)*.01+(G.eco.un>8?-.004:G.eco.inf>5?.004:0),-1,1);m.s=cl(m.s+(R()-.5)*.03+(P.s-m.s)*.01,-1,1);m.amb=cl(m.amb+(R()-.5)*.02,0,1);if(R()<.01)m.obj=pk(OB)});
+for(let i=0;i<3;i++)aiAct(pk(act()));if(R()<.4)event();if(R()<.18)worldNews();if(R()<.3)stNews();if(G.day%12==0||(!G.bills.some(b=>b.by=='gov')&&R()<.2))govBill();
+G.bills.filter(b=>G.day>=b.dl).forEach(b=>{if(G.moving||G.loc!='DC'||(G.W&&G.W.loc!=WH)){G.rep=cl(G.rep-1,0,100);news(`${G.pn} misses a vote on the ${b.t} bill while away from Washington.`)}resolve(b,null)});if(G.day%30==0)month();
+G.prom=G.prom.filter(p=>{if(G.day<p.due)return 1;const m=mp(p.id);if(!m)return 0;if(p.sincere&&G.gov.pm==G.mid&&!m.post){m.post='Minister';m.rel+=15;mem(m,'got the ministry promised');news(`${m.n} is appointed minister by ${G.pn}.`)}else{m.rel-=m.pers=='honest'?40:30;mem(m,'promise broken');G.rep=cl(G.rep-6,0,100);G.broke++;news(`${m.n} accuses ${G.pn} of breaking a promise.`)}return 0});
+if(G.gov){const pp=G.gov.p.filter(i=>i!=G.P.findIndex(x=>x.lead==G.gov.pm));pp.forEach(i=>{if(G.P[i].sat<22&&R()<.12){G.gov.p=G.gov.p.filter(x=>x!=i);news(`${G.P[i].n} quits the coalition!`)}});
+const gs=G.gov.p.reduce((a,i)=>a+sOf(i),0);if((G.eco.appr<44&&R()<.04)||(gs-maj()<=2&&R()<.03)){news('The opposition tables a no-confidence motion.');noconf('ai')}}
+G.offers=G.offers.filter(o=>mp(o.id));if(G.me&&0);
+G.objs.forEach(i=>{if(!G.done.includes(i)&&OBJ[i][1]()){G.done.push(i);G.ip+=10;news(`${G.pn} quietly achieves a private goal: ${OBJ[i][0]}.`)}});
+if(G.day>=G.nextElec)election();save()}
+// handlers
+Object.assign(H,{tab:i=>G.tab=i,sel:i=>{G.sel=i;G.tab=0},day:()=>tick(),week:()=>{for(let i=0;i<7;i++)tick()},
+meet:i=>{if(!spend(1))return;const m=mp(i);m.rel=cl(m.rel+(m.pers=='diplomatic'?8:5)+(1-dist(m,me()))*2,-100,100);mem(m,'met with you')},
+bribe:(i,a)=>{if(!spend(1)||!pay(a))return;const m=mp(i),p=({corrupt:.9,opportunistic:.7,manipulative:.6,ambitious:.55,diplomatic:.4,aggressive:.4,honest:.1}[m.pers]||.5)+(m.obj=='wealth'?.2:0)+(a>=250?.15:0);
+if(R()<p){m.bought=25;m.scam=(m.pers=='corrupt'||m.pers=='manipulative')&&R()<.4?1:0;m.rel+=8;mem(m,'accepted your money');T('Money changes hands.');if(R()<.12){G.scand++;G.rep-=12;news(`BRIBERY CLAIMS: ${G.pn} linked to cash payments to ${m.n}.`)}}else{m.rel-=25;mem(m,'you tried to bribe me');T('Refused!');if(R()<.4){G.scand++;G.rep-=12;news(`${m.n} reports a bribery attempt by ${G.pn}.`)}}},
+prom:(i,s)=>{if(!spend(2))return;const m=mp(i);m.rel+=m.obj=='post'?25:14;G.prom.push({id:i,due:G.day+40,sincere:s});mem(m,'you promised me a ministry')},
+secure:(i,b)=>{if(!spend(1))return;const m=mp(i),bl=G.bills.find(x=>x.id==b);if(!bl)return;const p=cl(.35+m.rel/150-(dist(m,bl)>1?.3:0)+(m.pers=='diplomatic'?.1:0)+(G.rep-50)/200,.05,.95);if(R()<p){m.deal=b;mem(m,'agreed to back '+bl.t);T('They say they will vote with you… (can they be trusted?)')}else{m.rel-=3;T('Declined.')}},
+invest:i=>{if(!spend(1)||!pay(80))return;const m=mp(i);m.known=1;T(`Intel: objective=${m.obj}; ${m.dirt?'secret: '+m.dirt:'no dirt found'}.`)},
+black:i=>{const m=mp(i);if(!m.known||!m.dirt||!spend(2))return;m.black=15;m.rel-=30;mem(m,'blackmailed by you');if(R()<.15){G.rep-=10;news(`${G.pn} accused of blackmail.`)}},
+leak:i=>{const m=mp(i);if(!m.known||!m.dirt||!spend(1))return;m.rep-=25;G.P[m.p].pop-=.8;m.rel-=50;news(`LEAKED: ${m.n} accused of ${m.dirt}.`);m.dirt='';norm();m.rep<15&&G.P[m.p].lead==m.id&&resignL(m.p)},
+rumor:i=>{if(!spend(2))return;const m=mp(i);m.rep-=10;G.P[m.p].pop-=.3;norm();if(R()<.25){G.rep-=10;mem(m,'rumour traced to you');news(`Rumours about ${m.n} traced to ${G.pn}.`)}},
+vote:(b,y)=>resolve(G.bills.find(x=>x.id==b),y),
+whip:b=>{if(!spend(1))return;const bl=G.bills.find(x=>x.id==b);let y=0;act().forEach(m=>sc(m,bl)+(m.deal==b?2.5:0)>0&&y++);bl.fc=Math.max(0,y+ri(-4,4))},
+amend:b=>{if(!spend(1))return;const bl=G.bills.find(x=>x.id==b);bl.e*=.5;bl.s*=.5;bl.am=1;bl.t+=' (amended)'},
+propose:t=>{if(!spend(4))return;const x=BT[t];G.bills.push({id:G.uid++,t:x[0],e:x[1],s:x[2],fx:x[3],by:'me',dl:G.day+6});news(`${G.pn} tables the ${x[0]} bill.`)},
+accept:i=>{const o=G.offers[i],m=mp(o.id);if(!pay(o.cost))return;m.bought=20;m.scam=R()<.45?1:0;m.rel+=5;mem(m,'sold you his vote');G.offers.splice(i,1)},decline:i=>{G.offers.splice(i,1)},
+coal:p=>{if(!spend(3))return;const pm=G.gov.pm==G.mid,P=G.P[p];if(pm){const q=.8-dist(P,G.P[me().p])*.45+(G.rep-50)/200;if(R()<q){G.gov.p.push(p);P.sat=55;news(`${P.n} joins ${G.pn}'s coalition.`)}else T('They refuse.')}else if(G.P[me().p].lead==G.mid&&!inGov(me().p)){const q=.6-dist(G.P[me().p],G.P[mp(G.gov.pm).p])*.4+(G.rep-50)/200;if(R()<q){G.gov.p.push(me().p);G.P[me().p].sat=55;news(`${G.P[me().p].n} joins the government.`)}else T('The PM says no.')}},
+dismiss:p=>{if(G.gov.pm!=G.mid||p==me().p)return;G.gov.p=G.gov.p.filter(x=>x!=p);news(`${G.pn} dismisses ${G.P[p].n} from government.`);G.P[p].pop-=.5;norm()},
+challenge:()=>{const m=me(),p=m.p,l=mp(G.P[p].lead);if(!l||l==m||!spend(6)||!pay(100))return;const ms=act().filter(x=>x.p==p);let y=0;ms.forEach(x=>{x.id==G.mid||x.rel+(50-l.rep)*.5+R()*20-15>15?y++:0});if(y>ms.length/2){G.P[p].lead=m.id;if(G.gov&&G.gov.pm==l.id)G.gov.pm=m.id;news(`${G.pn} topples ${l.n} and becomes ${G.P[p].n} leader${G.gov.pm==m.id?' and Prime Minister':''}!`)}else{l.rel-=30;G.rep-=5;news(`${G.pn}'s leadership challenge against ${l.n} fails ${y}–${ms.length-y}.`)}},
+motion:()=>{if(!G.gov||inGov(me().p)||G.P[me().p].lead!=G.mid||!spend(5))return;noconf('me')},confid:()=>{if(G.gov.pm!=G.mid||!spend(3))return;noconf('gov')},
+fund:()=>{if(pay(200)){G.P[me().p].pop+=.5;norm();me().rep=cl(me().rep+2,0,100)}},
+tax:d=>{if(G.gov.pm!=G.mid||!spend(2))return;G.eco.tax=cl(G.eco.tax+d,15,50);G.eco.appr-=d*.8},serv:d=>{if(G.gov.pm!=G.mid||!spend(2))return;G.eco.serv=cl(G.eco.serv+d,10,100);G.eco.appr+=d*.3},
+rally:r=>{if(!spend(2)||!pay(60))return;const p=G.P[me().p];p.pop+=.6;p.bias[r]+=1.5;norm()},ad:()=>{if(!pay(120))return;G.P[me().p].pop+=1;norm()},
+debate:()=>{if(!spend(3))return;const w=R()<.35+G.rep/250;G.P[me().p].pop+=w?1.5:-1;norm();news(`${G.pn} ${w?'wins':'flops in'} the televised debate.`)},
+attack:p=>{if(!pay(90))return;G.P[p].pop-=1;G.rep-=2;norm()},
+byel:()=>{if(!pay(300))return;const m=me();if(R()<.35+G.P[m.p].pop/100+G.rep/300){m.out=0;news(`${G.pn} wins a by-election and returns to parliament.`)}else T('Defeated in the by-election.')},
+hide:()=>{if(G.scand>0&&pay(200)){R()<.7?(G.scand--,G.rep+=6):T('The cover-up fails.')}},
+sb:(k,v)=>{k=='cash'?G.cash+=1000:k=='ip'?G.ip=25:k=='ev'?event():k=='el'?election():k=='sp'?spawnParty():k=='pop'?(G.P[v[0]].pop+=v[1],norm()):0},
+snapElec:()=>{if(!spend(4))return;if(G.gov&&G.gov.pm==G.mid){news(`${G.pn} calls a snap general election!`);election();return}let ay=0,tot=0;act().forEach(m=>{const g=inGov(m.p);let v=m.id==G.mid?1:(g?-1-(G.P[m.p].sat-50)/60:1)+(G.eco.appr<46?.5:-.2)+m.rel/250;tot++;v>0&&ay++});if(ay>tot/2){news(`Parliament votes ${ay}–${tot-ay} for an early election on ${G.pn}'s motion!`);election()}else{news(`Early election motion defeated ${ay}–${tot-ay}.`);T(`Motion defeated ${ay}–${tot-ay}`)}},
+mkparty:(n,c,e,s)=>{const nm=(n||'').trim();if(!nm){T('Enter a party name');return}if(G.P.some(p=>!p.dead&&p.n.toLowerCase()==nm.toLowerCase())){T('Party name already exists');return}if(G.mode!='sandbox'&&(!spend(4)||!pay(200)))return;const id=G.P.length,np={n:nm,c:c||'#38bdf8',e:cl(+e||0,-1,1),s:cl(+s||0,-1,1),id,pop:ri(7,12),sat:60,lead:G.mid,bias:RG.map(()=>ri(-6,6)),dead:0};G.P.push(np);if(G.ST)for(const k in G.ST)G.ST[k].off.push((R()-.5)*4);const mm=me(),oldP=mm.p;if(G.P[oldP].lead==G.mid)G.P[oldP].lead=null;mm.p=id;mm.post='';mm.e=np.e;mm.s=np.s;act().filter(m=>m.id!=G.mid&&G.P[m.p].lead!=m.id&&(m.rel>15||dist(m,np)<.7)).slice(0,2).forEach(m=>{m.p=id;mem(m,'joined '+nm)});leaders();norm();news(`${G.pn} founds a new party: ${nm}!`);T('Founded '+nm)},
+save:()=>{save();T('Saved.')},load:()=>{if(window.PARL_LOAD)window.PARL_LOAD();else{const s=localStorage.getItem('parl1');if(s){G=JSON.parse(s);G.spd=0}}},newg:()=>{G=null},start:()=>newGame()});
+const VG=[['Young voters',.25,-.4,-.5],['Workers',.3,-.3,.1],['Retirees',.2,.2,.5],['Business owners',.1,.8,-.1],['Rural families',.15,.3,.6]];
+function VGX(){G.vg=G.vg||VG.map(g=>g.slice());const e=G.eco;G.vg.forEach((g,i)=>{g[2]=cl(g[2]+(R()-.5)*.08+(i==1&&e.un>8?-.03:0)+(i==3&&e.tax>35?.03:0),-1,1);g[3]=cl(g[3]+(R()-.5)*.08,-1,1)});const r=G.P.map(p=>p.dead?0:G.vg.reduce((a,g)=>a+g[1]*Math.max(.05,1-(Math.abs(p.e-g[2])+Math.abs(p.s-g[3]))*.55),0)),s=r.reduce((a,b)=>a+b)||1;G.P.forEach((p,i)=>{if(!p.dead)p.pop+=(r[i]/s*100-p.pop)*.1})}
+const spk=()=>{let s=mp(G.spk);if(!s||s.out){s=act().filter(m=>m.id!=G.mid&&(m.pers=='diplomatic'||m.pers=='honest'))[0]||act()[0];G.spk=s.id}return s};
+const OPL=()=>{const o=G.P.filter(p=>!inGov(p.id)&&sOf(p.id)>0).sort((a,b)=>sOf(b.id)-sOf(a.id))[0];return o&&mp(o.lead)};
+const CAB=()=>act().filter(m=>m.post&&/Sec|Chan/.test(m.post)).map(m=>m.post+': '+nm(m)).join(' · ')||'none yet';
+const APP=m=>G.gov.pm==G.mid&&m.id!=G.mid&&inGov(m.p)?['Chancellor','Foreign Sec','Health Sec','Defence Sec','Home Sec'].map(p=>`<button onclick="D('appoint',${m.id},'${p}')">${p}</button>`).join('')+(m.post?`<button onclick="D('dismissMin',${m.id})">Dismiss minister</button>`:''):'';
+Object.assign(H,{speech:(b,d)=>{if(!spend(2))return;const bl=G.bills.find(x=>x.id==b);if(!bl)return;const w=R()<.4+G.rep/250;bl.sp=(bl.sp||0)+(w?d*.5:-d*.2);G.rep=cl(G.rep+(w?2:-1),0,100);news(`${G.pn} delivers a ${w?'rousing':'stumbling'} speech ${d>0?'for':'against'} the ${bl.t} bill.`)},
+wl:(b,d)=>{if(G.P[me().p].lead!=G.mid||!spend(2))return;const bl=G.bills.find(x=>x.id==b);bl.wl={p:me().p,d};news(`${G.pn} imposes a three-line whip ${d>0?'in favour of':'against'} the ${bl.t} bill.`)},
+pmq:()=>{if(G.gov.pm==G.mid||!spend(2))return;const pm=mp(G.gov.pm);if(R()<.35+G.rep/250){pm.rep-=8;G.eco.appr-=1;G.rep=cl(G.rep+3,0,100);news(`Question Time: ${G.pn} lands a blow on ${pm.n}.`)}else{G.rep=cl(G.rep-2,0,100);news(`Question Time: ${pm.n} swats away ${G.pn}'s question.`)}},
+donors:()=>{if(!spend(2))return;G.cash+=ri(150,400);if(R()<.15){G.scand++;G.rep-=8;news(`${G.pn} faces questions over party donations.`)}},
+appoint:(i,po)=>{if(G.gov.pm!=G.mid)return;const m=mp(i);act().forEach(x=>{if(x.post==po){x.post='';x.rel-=10}});m.post=po;m.rel+=15;news(`${m.n} is appointed ${po} by Prime Minister ${G.pn}.`)},
+dismissMin:i=>{if(G.gov.pm!=G.mid)return;const m=mp(i);if(!m||!m.post)return;news(`${m.n} is dismissed as ${m.post} by ${G.pn}.`);m.post='';m.rel-=15},
+customBill:(t,e,s,fxk)=>{const nm=(t||'').trim();if(!nm){T('Enter a bill title');return}if(!spend(4))return;const F={g:{gdp:.4,appr:1},sv:{serv:6,tax:1,appr:2},tc:{tax:-2,gdp:.3,appr:2},ts:{tax:2,serv:5,appr:0},so:{serv:2,appr:1},cl:{appr:2}}[fxk]||{appr:1};G.bills.push({id:G.uid++,t:nm,e:cl(+e||0,-1,1),s:cl(+s||0,-1,1),fx:F,by:'me',dl:G.day+6});news(`${G.pn} tables a custom bill: ${nm}.`)},
+repeal:id=>{if(!spend(4))return;const l=(G.laws||[]).find(x=>x.id==id);if(!l)return;const rfx={};for(const k in l.fx)rfx[k]=-l.fx[k];G.bills.push({id:G.uid++,t:'Repeal: '+l.t,e:-l.e,s:-l.s,fx:rfx,by:'me',dl:G.day+6});G.laws=G.laws.filter(x=>x.id!=id);news(`${G.pn} moves to repeal ${l.t}.`)},
+crisis:(cid,oi)=>{const idx=(G.crises||[]).findIndex(x=>x.id==cid);if(idx<0)return;const cr=G.crises[idx];CRISES[cr.fn].opts[oi][1]();G.crises.splice(idx,1)},
+defect:p=>{const mm=me();if(p==mm.p||!spend(3))return;if(G.P[mm.p].lead==G.mid)G.P[mm.p].lead=null;mm.p=p;mm.post='';leaders();news(`${G.pn} crosses the floor to join ${G.P[p].n}!`)}});
+
+Object.assign(H,{spd:v=>{G.spd=v}});
+function worldNews(){const x=ri(0,5),r=RG[x],e=G.eco,g=(G.gov&&G.gov.p)||[];const L=[[`Wildfires scorch the ${r}; the government is blamed for a slow response.`,()=>{g.forEach(i=>G.P[i].bias[x]-=1.5);e.appr-=.8}],[`A tech boom lifts jobs across the ${r}.`,()=>{g.forEach(i=>G.P[i].bias[x]+=1.2);e.un-=.1}],[`Dockworkers strike in the ${r}, snarling supply chains.`,()=>{e.gdp-=.2;e.inf+=.1}],[`Harvest festival draws record crowds in the ${r}.`,()=>{}],[`Flood warnings issued across the ${r}.`,()=>{e.serv-=.5}],[`A new factory opens in the ${r}, creating thousands of jobs.`,()=>{e.un-=.15;g.forEach(i=>G.P[i].bias[x]+=.8)}],[`Local by-election upsets rattle the ${r}.`,()=>{pk(G.P.filter(p=>!p.dead)).bias[x]+=1.5}]];const q=pk(L);news(q[0]);q[1]()}
+function AIGOV(){if(!G.gov||G.gov.pm==G.mid)return;const pm=mp(G.gov.pm),e=G.eco;e.tax=cl(e.tax+(pm.e>0?-.5:.5),15,50);e.serv=cl(e.serv+(pm.e>0?-1:1.5),10,100);if(G.day%60==0){const ps=['Chancellor','Foreign Sec','Health Sec','Defence Sec','Home Sec'],c=act().filter(m=>inGov(m.p)&&m.id!=G.mid);act().forEach(m=>{if(m.id!=G.mid&&/Sec|Chan/.test(m.post))m.post=''});ps.forEach(p=>{const m=pk(c);m&&(m.post=p)});news('Cabinet reshuffle: '+ps.map(p=>{const m=act().find(x=>x.post==p);return m?m.n+' ('+p+')':''}).filter(Boolean).join(', ')+'.')}}
+const STATES={
+  "AK":{name:"Alaska",ev:3,y2024:"R",y2020:"R",lean:"R"},
+  "AL":{name:"Alabama",ev:9,y2024:"R",y2020:"R",lean:"R"},
+  "AR":{name:"Arkansas",ev:6,y2024:"R",y2020:"R",lean:"R"},
+  "AZ":{name:"Arizona",ev:11,y2024:"R",y2020:"D",lean:"toss"},
+  "CA":{name:"California",ev:54,y2024:"D",y2020:"D",lean:"D"},
+  "CO":{name:"Colorado",ev:10,y2024:"D",y2020:"D",lean:"D"},
+  "CT":{name:"Connecticut",ev:7,y2024:"D",y2020:"D",lean:"D"},
+  "DC":{name:"District of Columbia",ev:3,y2024:"D",y2020:"D",lean:"D"},
+  "DE":{name:"Delaware",ev:3,y2024:"D",y2020:"D",lean:"D"},
+  "FL":{name:"Florida",ev:30,y2024:"R",y2020:"R",lean:"R"},
+  "GA":{name:"Georgia",ev:16,y2024:"R",y2020:"D",lean:"toss"},
+  "HI":{name:"Hawaii",ev:4,y2024:"D",y2020:"D",lean:"D"},
+  "IA":{name:"Iowa",ev:6,y2024:"R",y2020:"R",lean:"R"},
+  "ID":{name:"Idaho",ev:4,y2024:"R",y2020:"R",lean:"R"},
+  "IL":{name:"Illinois",ev:19,y2024:"D",y2020:"D",lean:"D"},
+  "IN":{name:"Indiana",ev:11,y2024:"R",y2020:"R",lean:"R"},
+  "KS":{name:"Kansas",ev:6,y2024:"R",y2020:"R",lean:"R"},
+  "KY":{name:"Kentucky",ev:8,y2024:"R",y2020:"R",lean:"R"},
+  "LA":{name:"Louisiana",ev:8,y2024:"R",y2020:"R",lean:"R"},
+  "MA":{name:"Massachusetts",ev:11,y2024:"D",y2020:"D",lean:"D"},
+  "MD":{name:"Maryland",ev:10,y2024:"D",y2020:"D",lean:"D"},
+  "ME":{name:"Maine",ev:4,y2024:"D",y2020:"D",lean:"D"},
+  "MI":{name:"Michigan",ev:15,y2024:"R",y2020:"D",lean:"toss"},
+  "MN":{name:"Minnesota",ev:10,y2024:"D",y2020:"D",lean:"D"},
+  "MO":{name:"Missouri",ev:10,y2024:"R",y2020:"R",lean:"R"},
+  "MS":{name:"Mississippi",ev:6,y2024:"R",y2020:"R",lean:"R"},
+  "MT":{name:"Montana",ev:4,y2024:"R",y2020:"R",lean:"R"},
+  "NC":{name:"North Carolina",ev:16,y2024:"R",y2020:"R",lean:"toss"},
+  "ND":{name:"North Dakota",ev:3,y2024:"R",y2020:"R",lean:"R"},
+  "NE":{name:"Nebraska",ev:5,y2024:"R",y2020:"R",lean:"R"},
+  "NH":{name:"New Hampshire",ev:4,y2024:"D",y2020:"D",lean:"toss"},
+  "NJ":{name:"New Jersey",ev:14,y2024:"D",y2020:"D",lean:"D"},
+  "NM":{name:"New Mexico",ev:5,y2024:"D",y2020:"D",lean:"D"},
+  "NV":{name:"Nevada",ev:6,y2024:"R",y2020:"D",lean:"toss"},
+  "NY":{name:"New York",ev:28,y2024:"D",y2020:"D",lean:"D"},
+  "OH":{name:"Ohio",ev:17,y2024:"R",y2020:"R",lean:"R"},
+  "OK":{name:"Oklahoma",ev:7,y2024:"R",y2020:"R",lean:"R"},
+  "OR":{name:"Oregon",ev:8,y2024:"D",y2020:"D",lean:"D"},
+  "PA":{name:"Pennsylvania",ev:19,y2024:"R",y2020:"D",lean:"toss"},
+  "RI":{name:"Rhode Island",ev:4,y2024:"D",y2020:"D",lean:"D"},
+  "SC":{name:"South Carolina",ev:9,y2024:"R",y2020:"R",lean:"R"},
+  "SD":{name:"South Dakota",ev:3,y2024:"R",y2020:"R",lean:"R"},
+  "TN":{name:"Tennessee",ev:11,y2024:"R",y2020:"R",lean:"R"},
+  "TX":{name:"Texas",ev:40,y2024:"R",y2020:"R",lean:"R"},
+  "UT":{name:"Utah",ev:6,y2024:"R",y2020:"R",lean:"R"},
+  "VA":{name:"Virginia",ev:13,y2024:"D",y2020:"D",lean:"D"},
+  "VT":{name:"Vermont",ev:3,y2024:"D",y2020:"D",lean:"D"},
+  "WA":{name:"Washington",ev:12,y2024:"D",y2020:"D",lean:"D"},
+  "WI":{name:"Wisconsin",ev:10,y2024:"R",y2020:"D",lean:"toss"},
+  "WV":{name:"West Virginia",ev:4,y2024:"R",y2020:"R",lean:"R"},
+  "WY":{name:"Wyoming",ev:3,y2024:"R",y2020:"R",lean:"R"}
+};
+const SM={AK:[.73,'Anchorage, Fairbanks'],AL:[5.1,'Birmingham, Montgomery'],AR:[3.1,'Little Rock'],AZ:[7.5,'Phoenix, Tucson'],CA:[39,'Los Angeles, San Francisco'],CO:[5.9,'Denver'],CT:[3.6,'Hartford'],DC:[.69,'Washington'],DE:[1.03,'Wilmington'],FL:[23,'Miami, Tampa'],GA:[11,'Atlanta'],HI:[1.4,'Honolulu'],IA:[3.2,'Des Moines'],ID:[2,'Boise'],IL:[12.5,'Chicago'],IN:[6.9,'Indianapolis'],KS:[2.9,'Wichita'],KY:[4.6,'Louisville'],LA:[4.6,'New Orleans'],MA:[7,'Boston'],MD:[6.2,'Baltimore'],ME:[1.4,'Portland'],MI:[10,'Detroit'],MN:[5.7,'Minneapolis'],MO:[6.2,'Kansas City, St. Louis'],MS:[2.9,'Jackson'],MT:[1.1,'Billings'],NC:[11,'Charlotte, Raleigh'],ND:[.78,'Fargo'],NE:[2,'Omaha'],NH:[1.4,'Manchester'],NJ:[9.3,'Newark'],NM:[2.1,'Albuquerque'],NV:[3.2,'Las Vegas'],NY:[19.6,'New York City, Buffalo'],OH:[11.8,'Columbus, Cleveland'],OK:[4,'Oklahoma City'],OR:[4.2,'Portland'],PA:[13,'Philadelphia, Pittsburgh'],RI:[1.1,'Providence'],SC:[5.4,'Charleston'],SD:[.92,'Sioux Falls'],TN:[7.1,'Nashville, Memphis'],TX:[30.5,'Houston, Dallas'],UT:[3.4,'Salt Lake City'],VA:[8.7,'Richmond'],VT:[.65,'Burlington'],WA:[7.8,'Seattle'],WI:[5.9,'Milwaukee'],WV:[1.8,'Charleston'],WY:[.58,'Cheyenne']};
+const SR={WA:0,OR:0,CA:0,AK:0,HI:0,MT:1,ID:1,WY:1,NV:1,UT:1,CO:1,AZ:1,NM:1,ND:2,SD:2,NE:2,KS:2,OK:2,TX:2,MN:3,IA:3,MO:3,WI:3,IL:3,IN:3,MI:3,OH:3,AR:4,LA:4,MS:4,AL:4,TN:4,KY:4,GA:4,FL:4,SC:4,NC:4,VA:4,WV:4,PA:5,NY:5,NJ:5,CT:5,RI:5,MA:5,VT:5,NH:5,ME:5,DE:5,MD:5,DC:5};
+const CT={'AK':[336,618],'AL':[943,427],'AR':[835,386],'AZ':[473,376],'CA':[362,276],'CO':[599,284],'CT':[1151,188],'DC':[1093,261],'DE':[1119,251],'FL':[1009,525],'GA':[1004,415],'HI':[599,623],'IA':[809,226],'ID':[473,120],'IL':[878,271],'IN':[932,267],'KS':[724,303],'KY':[947,312],'LA':[854,468],'MA':[1166,167],'MD':[1088,258],'ME':[1187,94],'MI':[920,154],'MN':[805,127],'MO':[829,306],'MS':[881,431],'MT':[556,96],'NC':[1058,342],'ND':[699,102],'NE':[704,235],'NH':[1159,130],'NJ':[1126,226],'NM':[578,385],'NV':[411,261],'NY':[1100,160],'OH':[989,247],'OK':[717,373],'OR':[375,126],'PA':[1073,221],'RI':[1169,180],'SC':[1043,391],'SD':[697,174],'TN':[946,353],'TX':[688,466],'UT':[496,259],'VA':[1057,293],'VT':[1136,135],'WA':[396,55],'WI':[862,162],'WV':[1039,274],'WY':[576,191]};
+let MAPEL=null;
+const lpar=l=>l>.15?pk([0,0,1]):l<-.15?pk([3,3,4]):pk([0,2,3]);
+function initST(){G.ST={};G.lp={};G.tr=[];G.fund=0;G.loc='DC';G.ss='DC';const ib=[82,70,62,66,57,85];for(const c in STATES){const s=STATES[c],l=(s.lean=='D'?.3:s.lean=='R'?-.3:0)+(R()-.5)*.1,rg=SR[c],un=+(3.5+R()*2.5).toFixed(1);G.ST[c]={l,rg,pop:SM[c][0],un,ub:un-6,inc:ib[rg]+ri(-8,8),gov:{n:pk(FN)+' '+pk(LN),p:lpar(l),rel:0},sen:[lpar(l+(R()-.5)*.2),lpar(l+(R()-.5)*.2)],leg:lpar(l),off:G.P.map(()=>(R()-.5)*4)}}}
+function migr(){if(!G.ST)initST();G.laws=G.laws||[];G.crises=G.crises||[];G.pmHist=G.pmHist||[]}
+function stInfo(c){const t=G.ST[c],mi=me().p,v=G.P.map((p,i)=>p.dead?0:Math.max(1,p.pop+p.bias[t.rg]-p.e*t.l*45-(i==2?Math.abs(t.l)*45:0)+(t.off[i]||0)+(i==mi?(G.lp[c]||0)*.15:0))),sm=v.reduce((a,b)=>a+b)||1,sh=v.map(x=>x/sm*100),o=sh.map((x,i)=>i).sort((a,b)=>sh[b]-sh[a]);return{sh,lead:o[0],mg:sh[o[0]]-sh[o[1]],ap:cl(G.eco.appr-(t.un-5)*2+(inGov(t.gov.p)?3:-1),0,100)}}
+function tipHtml(c){const s=STATES[c],t=G.ST[c],i=stInfo(c),pn=x=>G.P[x].n;return`<b>${s.name}</b> (${s.ev} EV)<br>Governor ${t.gov.n} (${pn(t.gov.p)})<br>Senators: ${pn(t.sen[0])}, ${pn(t.sen[1])}<br>Legislature: ${pn(t.leg)}<br>Pres. vote 2020/2024: ${s.y2020}/${s.y2024}<br>Poll leader: ${pn(i.lead)} ${i.sh[i.lead].toFixed(0)}% (lead ${i.mg.toFixed(1)})<br>${i.sh.map((x,k)=>G.P[k].dead?'':G.P[k].n.split(' ')[0]+' '+x.toFixed(0)).filter(Boolean).join(' · ')}<br>Pop ${t.pop}M · Unemp ${t.un}% · Income $${t.inc}k<br>Gov't approval ${Math.round(i.ap)}% · Your standing ${Math.round(G.lp[c]||0)}`}
+const FIPS={'01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT','10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL','18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD','25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE','32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND','39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD','47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV','55':'WI','56':'WY'};
+function recolor(){if(!MAPEL)return;const ch=MAPEL.querySelectorAll('path[data-id]');for(let k=0;k<ch.length;k++){const c=ch[k].dataset.id,i=stInfo(c);ch[k].setAttribute('fill',i.mg<2.5?'#6d28d9':G.P[i.lead].c);const h=c==G.loc,sl=c==G.ss;ch[k].setAttribute('stroke',h?'#fff':sl?'#c9a24b':'#0a101c');ch[k].setAttribute('stroke-width',h||sl?2.5:1)}}
+function mountMap(){const h=$('mp');if(!h)return;if(!MAPEL){const N='http://www.w3.org/2000/svg';MAPEL=document.createElementNS(N,'svg');MAPEL.setAttribute('viewBox','0 0 975 610');MAPEL.style.cssText='width:100%;max-width:880px;display:block;background:#0e1626;border-radius:8px';const ld=document.createElementNS(N,'text');ld.setAttribute('x','487');ld.setAttribute('y','305');ld.setAttribute('text-anchor','middle');ld.setAttribute('fill','#8b8fa0');ld.setAttribute('font-size','14');ld.textContent='Loading US map…';MAPEL.appendChild(ld);
+if(!$('tip')){const tp=document.createElement('div');tp.id='tip';tp.style.cssText='position:fixed;pointer-events:none;background:#0a1220f2;border:1px solid #2a3144;padding:8px 11px;border-radius:8px;font-size:12px;z-index:40;opacity:0;max-width:260px';document.body.appendChild(tp)}
+const tp=$('tip');MAPEL.onmousemove=e=>{const c=e.target.dataset&&e.target.dataset.id;if(!c||!G||!G.ST){tp.style.opacity=0;return}tp.innerHTML=tipHtml(c);tp.style.opacity=1;tp.style.left=Math.min(e.clientX+12,innerWidth-270)+'px';tp.style.top=Math.min(e.clientY+12,innerHeight-190)+'px'};MAPEL.onmouseleave=()=>tp.style.opacity=0;MAPEL.onclick=e=>{const c=e.target.dataset&&e.target.dataset.id;if(c)D('st',c)};
+if(typeof d3==='undefined'||typeof topojson==='undefined'){ld.textContent='Map libraries failed to load.'}else{d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json').then(us=>{ld.remove();const gp=d3.geoPath(),fs=topojson.feature(us,us.objects.states).features.filter(f=>FIPS[f.id]);fs.forEach(f=>{const p=document.createElementNS(N,'path');p.setAttribute('d',gp(f));p.setAttribute('stroke-linejoin','round');p.dataset.id=FIPS[f.id];p.style.cursor='pointer';MAPEL.appendChild(p)});recolor()}).catch(err=>{ld.textContent='Failed to load map: '+err.message})}}
+h.appendChild(MAPEL);recolor()}
+function spanel(){const c=G.ss||G.loc,s=STATES[c],t=G.ST[c],i=stInfo(c),here=c==G.loc&&!G.moving,pn=x=>G.P[x].n;let km=0;if(!here&&c!=G.loc)km=Math.hypot(CT[c][0]-CT[G.loc][0],CT[c][1]-CT[G.loc][1])*4.4;
+const dd=Math.max(1,Math.ceil(km/700)),fd=km>2500?2:1,dc=Math.round(40+km*.22+dd*90),fc=Math.round(180+km*.14),pr=G.P.map((p,k)=>p.dead?'':`<div>${p.n} ${i.sh[k].toFixed(1)}%<div class=bar><i style="width:${i.sh[k]*2}%;background:${p.c}"></i></div></div>`).join('');
+const ln=G.news.filter(n=>n.t.includes(s.name)).slice(0,3).map(n=>`<div class=nw><span class=mu>Day ${n.d}</span> ${n.t}</div>`).join('')||'<span class=mu>Quiet locally.</span>';
+const loc=here?`<button onclick="D('local','rally')">Hold rally $400 (2 IP, campaign funds)</button><button onclick="D('local','hq')">Visit campaign HQ (1 day)</button><button onclick="D('local','donors')">Meet donors (1)</button><button onclick="D('local','press')">Press conference (2)</button><button onclick="D('local','cap')">Visit state capitol (1)</button>`:(c==G.loc?'':`<button onclick="D('go','${c}','drive')">Drive: ${dd} day${dd>1?'s':''} · $${dc}</button><button onclick="D('go','${c}','fly')">Fly: ${fd} day${fd>1?'s':''} · $${fc}</button>`);
+return`<div class=pn><h3>${s.name} ${here?'(you are here)':''}</h3><select id=ssel onchange="D('st',this.value)">${Object.keys(STATES).map(k=>`<option value="${k}"${k==c?' selected':''}>${STATES[k].name}</option>`).join('')}</select> <span class=chip>${s.ev} electoral votes</span><span class=chip>Pop ${t.pop}M</span><span class=chip>Unemployment ${t.un}%</span><span class=chip>Income $${t.inc}k</span>
+<div class=g><div><b>Government control now:</b><br>Governor ${t.gov.n} (${pn(t.gov.p)}) · Senators ${pn(t.sen[0])}, ${pn(t.sen[1])} · Legislature ${pn(t.leg)}<br><b>Recent presidential voting (history):</b> 2020 ${s.y2020}, 2024 ${s.y2024}${s.y2020!=s.y2024?' (flipped)':''}<br><b>Current voter preference:</b> ${pn(i.lead)} leads by ${i.mg.toFixed(1)} pts${i.mg<2.5?' (competitive)':''}<br>Government approval here ${Math.round(i.ap)}% · your local standing ${Math.round(G.lp[c]||0)}<br>Major cities: ${SM[c][1]}<br><div class=mu>${here?'You are here. Campaign opportunities:':km?`Distance ~${Math.round(km)} km. Travel:`:'You are here.'}</div>${loc}</div><div>${pr}</div></div><b>Local news</b>${ln}</div>`}
+function tlog(){return`<div class=pn><h3>Itinerary &amp; travel history</h3>${G.tr.length?G.tr.slice(0,8).map(x=>`<div class=nw>Day ${x.d}: ${STATES[x.f].name} → ${STATES[x.t].name} by ${x.m}, ${x.days}d, $${x.cost}</div>`).join(''):'<span class=mu>No trips yet. You are in '+STATES[G.loc].name+'.</span>'}</div>`}
+const payf=n=>(G.fund||0)<n?(T('Not enough campaign funds: meet donors first'),0):(G.fund-=n,1);
+function arrive(c){const s=STATES[c],t=G.ST[c];G.loc=c;G.moving=0;G.ss=c;G.lp[c]=(G.lp[c]||0)+2;const k=ri(0,5);
+if(k==0){const g=ri(200,600);G.fund+=g;news(`A local donor in ${s.name} hands ${G.pn}'s campaign $${g}.`)}else if(k==1){G.rep=cl(G.rep+3,0,100);news(`Local reporters in ${s.name} run a friendly profile of ${G.pn}.`)}else if(k==2){G.rep=cl(G.rep-2,0,100);G.lp[c]-=2;news(`Hecklers disrupt ${G.pn}'s arrival in ${s.name}.`)}else if(k==3){t.gov.rel+=6;news(`Governor ${t.gov.n} greets ${G.pn} on arrival in ${s.name}.`)}else if(k==4){G.ip+=2;news(`A chance meeting in ${s.name} yields useful political gossip.`)}else{G.cash=Math.max(0,G.cash-120);news(`${G.pn}'s luggage goes astray in ${s.name}: $120 in replacements.`)}
+news(`${G.pn} arrives in ${s.name}.`)}
+function stNews(){migr();const c=pk(Object.keys(STATES)),s=STATES[c],t=G.ST[c],k=ri(0,4),g=G.P[t.gov.p];
+if(k==0){t.off[t.gov.p]+=.6;news(`Governor ${t.gov.n} (${g.n}) declares an emergency in ${s.name} after severe storms and is praised for a swift response.`)}
+else if(k==1){t.un+=.4;news(`A major employer announces layoffs in ${s.name}; unemployment ticks up.`)}
+else if(k==2){t.off[t.gov.p]-=.8;t.gov.rel-=5;news(`Governor ${t.gov.n} of ${s.name} faces criticism over a budget row.`)}
+else if(k==3){const q=pk(G.P);t.off[q.id]+=.5;news(`${q.n} organisers draw large crowds to a rally in ${s.name}.`)}
+else{news(`${s.name} legislature passes a ${pk(['transport','schools','housing','energy'])} funding bill ${pk(['narrowly','on party lines','with bipartisan support'])}.`)}}
+function STM(){migr();for(const c in G.ST){const t=G.ST[c];t.un=cl(t.un+(G.eco.un+t.ub-t.un)*.3+(R()-.5)*.2,1.5,15);t.inc=Math.max(40,t.inc*(1+(G.eco.gdp-1)*.0015));t.off=t.off.map(x=>cl(x+(R()-.5)*.4,-6,6))}for(const c in G.lp)G.lp[c]*=.9}
+Object.assign(H,{st:c=>{G.ss=c;G.tab=3},
+go:(c,m)=>{const a=G.loc,km=Math.hypot(CT[c][0]-CT[a][0],CT[c][1]-CT[a][1])*4.4,days=m=='fly'?(km>2500?2:1):Math.max(1,Math.ceil(km/700)),cost=Math.round(m=='fly'?180+km*.14:40+km*.22+days*90);if(c==a||G.moving||!pay(cost))return;G.tr.unshift({d:G.day,f:a,t:c,m,days,cost});G.tr.length>30&&G.tr.pop();news(`${G.pn} sets off from ${STATES[a].name} for ${STATES[c].name} (${m}, ${days} day${days>1?'s':''}, $${cost}).`);G.moving=1;for(let i=0;i<days;i++)tick();arrive(c);T('Journey complete.')},
+local:k=>{const c=G.loc,t=G.ST[c],s=STATES[c];
+if(k=='rally'){if(!spend(2)||!payf(400))return;G.lp[c]=(G.lp[c]||0)+4;t.off[me().p]+=.8;G.P[me().p].bias[t.rg]+=.3;G.rep=cl(G.rep+1,0,100);news(`${G.pn} draws about ${Math.round(t.pop*900+ri(200,900))} people to a rally in ${s.name}.`)}
+else if(k=='hq'){G.ip+=3;tick();news(`${G.pn} visits campaign headquarters in ${s.name} and rallies the volunteers.`)}
+else if(k=='donors'){if(!spend(1))return;const g=Math.round(ri(200,700)*(t.inc/65)*(1+(G.lp[c]||0)/25));G.fund+=g;news(`Donors in ${s.name} pledge $${g} to ${G.pn}'s campaign fund.`);if(R()<.08){G.scand++;G.rep-=6;news(`Questions are raised over a donor ${G.pn} met in ${s.name}.`)}}
+else if(k=='press'){if(!spend(2))return;const w=R()<.4+G.rep/250;G.rep=cl(G.rep+(w?3:-2),0,100);G.lp[c]=(G.lp[c]||0)+(w?2:-1);news(`${G.pn} ${w?'impresses reporters at':'stumbles in'} a press conference in ${s.name}.`)}
+else if(k=='cap'){if(!spend(1))return;t.gov.rel+=7;if(t.gov.rel>30&&t.gov.p==me().p){G.lp[c]=(G.lp[c]||0)+5;news(`Governor ${t.gov.n} publicly endorses ${G.pn} in ${s.name}.`)}else news(`${G.pn} meets Governor ${t.gov.n} at the ${s.name} state capitol.`)}}});
+
+function save(){try{if(window.PARL_SAVE)window.PARL_SAVE(G);else if(window.PARL_OFFLINE)localStorage.setItem('parl1',JSON.stringify(G))}catch(e){}}
+// views
+const pct=(v,c)=>`<div class=bar><i style="width:${cl(v,0,100)}%;${c?'background:'+c:''}"></i></div>`;
+function hemi(){const ms=act().sort((a,b)=>G.P[a.p].e-G.P[b.p].e||a.p-b.p||a.e-b.e),N=ms.length,rs=[90,125,160,195],sr=rs.reduce((a,b)=>a+b),sl=[];rs.forEach((r,k)=>{const n=k==3?N-sl.length:Math.round(N*r/sr);for(let i=0;i<n;i++)sl.push({a:Math.PI*(i/Math.max(1,n-1)),r})});sl.sort((a,b)=>a.a-b.a||a.r-b.r);
+return`<svg viewBox="0 0 440 230" style="width:100%;max-width:640px">${ms.map((m,i)=>{const s=sl[i],x=220-s.r*Math.cos(s.a),y=215-s.r*Math.sin(s.a),me_=m.id==G.mid;return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.id==G.sel?8:6}" fill="${G.P[m.p].c}" stroke="${me_?'#fff':inGov(m.p)?'#c9a24b':'none'}" stroke-width="2" onclick="D('sel',${m.id})" style="cursor:pointer"><title>${m.n}</title></circle>`}).join('')}<text x="220" y="205" fill="#8b8fa0" text-anchor="middle" font-size="11">${N} seats · majority ${maj()}</text></svg>`}
+function prof(){const m=mp(G.sel);if(!m)return`<div class=pn><h3>Politician</h3><span class=mu>Select a seat to view a profile and act.</span></div>`;const P=G.P[m.p],isMe=m.id==G.mid;
+const bills=G.bills.map(b=>`<button onclick="D('secure',${m.id},${b.id})">Secure vote: ${b.t}</button>`).join('');
+return`<div class=pn><h3>${m.n} ${isMe?'(you)':''}</h3><span style="color:${P.c}">${P.n}</span> · ${m.pers} · ${m.post||(P.lead==m.id?'Party leader':'Backbencher')}${G.gov&&G.gov.pm==m.id?' · <b>Prime Minister</b>':''}<br>Economy ${m.e<-.3?'left':m.e>.3?'right':'centre'}, social ${m.s<-.3?'liberal':m.s>.3?'conservative':'moderate'} · Reputation ${Math.round(m.rep)}${m.known?`<br>Secret goal: <b>${m.obj}</b>${m.dirt?` · dirt: ${m.dirt}`:''}`:''}
+${isMe?'':`<br>Trust in you: ${Math.round(m.rel)}${pct(m.rel/2+50)}Rival: ${nm(mp(m.rv))} · Ally: ${nm(mp(m.al))}<br>${m.bought>0?'<i>Holds your money.</i> ':''}${m.deal>=0&&G.bills.find(b=>b.id==m.deal)?'<i>Secret deal active.</i>':''}<div>
+<button onclick="D('meet',${m.id})">Meet (1)</button><button onclick="D('bribe',${m.id},100)">Bribe $100</button><button onclick="D('bribe',${m.id},250)">Bribe $250</button><button onclick="D('prom',${m.id},1)">Promise post (honest)</button><button onclick="D('prom',${m.id},0)">Promise post (bluff)</button><button onclick="D('invest',${m.id})">Investigate $80</button>${m.known&&m.dirt?`<button onclick="D('black',${m.id})">Blackmail</button><button onclick="D('leak',${m.id})">Leak dirt</button>`:''}<button onclick="D('rumor',${m.id})">Rumour (2)</button>${bills}${APP(m)}</div>`}
+<div class=mu style="margin-top:4px">${m.mem.map(x=>'• '+x).join('<br>')||'No memories yet.'}</div></div>`}
+function mpDir(){const pf=(window._mpf||'all'),pq=(window._mpq||'').toLowerCase();const ls=act().filter(m=>(pf=='all'||m.p==+pf)&&(!pq||m.n.toLowerCase().includes(pq))).slice(0,24);return`<div style="margin-top:6px"><select onchange="window._mpf=this.value;render()"><option value="all">All parties</option>${G.P.filter(p=>!p.dead).map(p=>`<option value="${p.id}"${pf==String(p.id)?' selected':''}>${p.n}</option>`).join('')}</select> <input placeholder="Search MPs…" value="${window._mpq||''}" oninput="window._mpq=this.value;render()" style="width:130px"><div style="margin-top:4px;max-height:95px;overflow:auto">${ls.map(m=>`<span class=chip>${nm(m)}${m.post?' ('+m.post+')':''}</span>`).join('')}</div></div>`}
+const T0=()=>{const pm=mp(G.gov.pm),cr=(G.crises||[]).map(c=>`<div class=pn style="border-color:#d9534f"><h3>CRISIS: ${c.t}</h3><div>${c.desc}</div>${c.opts.map((o,i)=>`<button onclick="D('crisis',${c.id},${i})">${o}</button>`).join('')}</div>`).join('');return`${cr}<div class=g><div class=pn><h3>Parliament</h3>${hemi()}<div class=mu>Gold ring = governing party · white ring = you</div>${mpDir()}</div><div>${prof()}<div class=pn><h3>Government</h3>Cabinet: ${CAB()}<br>Leader of the Opposition: ${nm(OPL())} · Speaker: ${nm(spk())}<br><button onclick="D('pmq')">Question Time (2)</button><button onclick="D('donors')">Court donors (2)</button><br>PM ${nm(pm)} · ${G.gov.p.map(i=>`<span style="color:${G.P[i].c}">${G.P[i].n}</span>`).join(', ')}<br>Seats ${G.gov.p.reduce((a,i)=>a+sOf(i),0)} / ${maj()} needed · Approval ${Math.round(G.eco.appr)}%${pct(G.eco.appr)}${G.lastVote?`<div class=mu>Last vote: ${G.lastVote.t} ${G.lastVote.y}–${G.lastVote.n}</div>`:''}${(G.pmHist||[]).length?`<div class=mu>PM history: ${G.pmHist.slice(0,3).map(h=>h.pm+' (Day '+h.d+')').join(' · ')}</div>`:''}</div></div></div>`};
+const T1=()=>{const out=me().out;return`<div class=pn><h3>Order paper</h3>${G.bills.map(b=>`<div class=nw><b>${b.t}</b> · by ${b.by=='gov'?'the Government':b.by=='ai'?b.an:G.pn} · vote by day ${b.dl}<br><span class=mu>Stance: economy ${b.e.toFixed(1)}, social ${b.s.toFixed(1)}. ${Object.entries(b.fx).map(([k,v])=>k+(v>0?'+':'')+v).join(' ')}</span>${b.fc!=null?`<br>Whip count (±4, MPs can lie): ~${b.fc} yes`:''}<br>${out||G.moving||G.loc!='DC'?'<span class=mu>Away from Washington: you cannot vote in person.</span>':`<button onclick="D('vote',${b.id},true)">Vote YES</button><button onclick="D('vote',${b.id},false)">Vote NO</button>`}<button onclick="D('vote',${b.id},null)">Let it proceed</button><button onclick="D('whip',${b.id})">Whip count (1)</button><button onclick="D('amend',${b.id})">Amend (1)</button><button onclick="D('speech',${b.id},1)">Speak for (2)</button><button onclick="D('speech',${b.id},-1)">Speak against (2)</button>${G.P[me().p].lead==G.mid?`<button onclick="D('wl',${b.id},1)">Whip YES (2)</button><button onclick="D('wl',${b.id},-1)">Whip NO (2)</button>`:''}</div>`).join('')||'<span class=mu>No bills pending.</span>'}</div>
+<div class=pn><h3>Propose legislation (4 influence)</h3>${BT.map((b,i)=>`<button onclick="D('propose',${i})">${b[0]}</button>`).join('')}</div>
+<div class=pn><h3>Draft custom bill (4 influence)</h3><input id=cb-t placeholder="Bill title" style="margin:2px"> <label style="font-size:12px">Economy <input id=cb-e type=range min=-1 max=1 step=0.1 value=0 style="vertical-align:middle;width:70px"></label> <label style="font-size:12px">Social <input id=cb-s type=range min=-1 max=1 step=0.1 value=0 style="vertical-align:middle;width:70px"></label> <select id=cb-fx><option value="g">Growth focus</option><option value="sv">Public services</option><option value="tc">Tax cut</option><option value="ts">Tax &amp; spend</option><option value="so">Security &amp; order</option><option value="cl">Civil liberties</option></select> <button onclick="D('customBill',$('cb-t').value,$('cb-e').value,$('cb-s').value,$('cb-fx').value)">Table bill</button></div>
+<div class=pn><h3>Statute book (enacted laws)</h3>${(G.laws||[]).length?G.laws.slice(0,12).map(l=>`<div class=nw><b>${l.t}</b> <span class=mu>Day ${l.d} · by ${l.by}</span> <button onclick="D('repeal',${l.id})">Move to repeal (4)</button></div>`).join(''):'<span class=mu>No laws enacted yet.</span>'}</div>`};
+const T2=()=>{const m=me(),pm=G.gov.pm==G.mid,lead=G.P[m.p].lead==G.mid;return`<div class=g>${G.P.filter(p=>!p.dead).map(p=>`<div class=pn><h3 style="color:${p.c}">${p.n}</h3>Support ${p.pop.toFixed(1)}% · ${sOf(p.id)} seats<br>Leader ${nm(mp(p.lead))}${inGov(p.id)?`<br>In government · satisfaction ${Math.round(p.sat)}${pct(p.sat,p.c)}`:''}<br>${!inGov(p.id)&&(pm||(lead&&p.id==m.p))?`<button onclick="D('coal',${p.id})">${pm?'Invite to coalition':'Request to join government'} (3)</button>`:''}${pm&&inGov(p.id)&&p.id!=m.p?`<button onclick="D('dismiss',${p.id})">Dismiss</button>`:''}${p.id!=m.p?`<button onclick="D('defect',${p.id})">Cross floor (3)</button>`:''}</div>`).join('')}</div>
+<div class=pn><h3>Your party & power</h3>${lead?'You lead your party. ':`<button onclick="D('challenge')">Challenge the leader (6 IP, $100)</button> `}<button onclick="D('fund')">Fund party $200</button>${!inGov(m.p)&&lead?`<button onclick="D('motion')">Table no-confidence motion (5)</button>`:''}${pm?`<button onclick="D('confid')">Call confidence vote (3)</button>`:''}<button onclick="D('snapElec')">${pm?'Call snap election (4)':'Push for early election (4)'}</button></div>
+<div class=pn><h3>Found a new party ${G.mode=='sandbox'?'(free in Sandbox)':'(4 IP, $200)'}</h3><input id=cp-name placeholder="Party name" style="margin:2px"> <label style="font-size:12px">Colour <input id=cp-col type=color value="#38bdf8" style="vertical-align:middle;padding:1px;width:32px;height:24px"></label> <label style="font-size:12px">Economy <input id=cp-e type=range min=-1 max=1 step=0.1 value=0 style="vertical-align:middle;width:80px"></label> <label style="font-size:12px">Social <input id=cp-s type=range min=-1 max=1 step=0.1 value=0 style="vertical-align:middle;width:80px"></label> <button onclick="D('mkparty',$('cp-name').value,$('cp-col').value,$('cp-e').value,$('cp-s').value)">Found party</button></div>`};
+function evTally(){const ev=G.P.map(()=>0);for(const c in STATES){const i=stInfo(c);ev[i.lead]+=STATES[c].ev}return ev}
+const T3=()=>{const a=alloc(),m=me(),ev=evTally();return`${G.lastElec?`<div class=pn style="border-color:#c9a24b"><h3>Last election (Day ${G.lastElec.d}) — PM: ${G.lastElec.pm}</h3><div class=g>${G.lastElec.res.map(r=>`<div><span style="color:${r.c}">${r.n}</span>: <b>${r.st}</b> seats (${r.pop.toFixed(1)}%)</div>`).join('')}</div></div>`:''}<div class=pn><h3>Election in ${G.nextElec-G.day} days — poll &amp; 538 EV projection</h3><div class=mu>Population ${(330+G.day/360*.6).toFixed(1)}M · projected turnout ${Math.round(cl(58+Math.abs(G.eco.appr-50)*.4+(G.nextElec-G.day<30?6:0),40,85))}% · ${(G.vg||VG).map(g=>g[0]+': '+(g[2]<-.2?'left':g[2]>.2?'right':'centre')).join(', ')}</div><div class=g>${G.P.map((p,i)=>p.dead?'':`<div>${p.n}: ${p.pop.toFixed(1)}% → <b>${a.tot[i]}</b> seats · <b>${ev[i]}</b> EV${pct(p.pop*2,p.c)}</div>`).join('')}</div></div>
+<div class=pn><h3>United States: political map &amp; travel</h3><div id=mp></div><div class=mu>Colour = party leading each state's polls · purple = margin under 2.5 pts · white outline = your location · hover for details, click a state to open it.</div>${spanel()}${tlog()}<div class=g>${RG.map((r,x)=>{const w=a.reg[x].st.indexOf(Math.max(...a.reg[x].st));return`<div style="border-left:6px solid ${G.P[w].c};padding-left:6px">${r} — leads: ${G.P[w].n}<br><span class=mu>${a.reg[x].st.map((v,i)=>v?G.P[i].n.split(' ')[0]+' '+v:'').filter(Boolean).join(' · ')}</span><br><button onclick="D('rally',${x})">Rally here $60 (2)</button></div>`}).join('')}</div></div>
+<div class=pn><h3>Campaign</h3><button onclick="D('snapElec')">${G.gov&&G.gov.pm==G.mid?'Call snap election (4)':'Push for early election (4)'}</button><button onclick="D('ad')">Campaign ad $120</button><button onclick="D('debate')">TV debate (3)</button>${G.P.filter(p=>!p.dead&&p.id!=m.p).map(p=>`<button onclick="D('attack',${p.id})">Attack ${p.n} $90</button>`).join('')}${m.out?`<br><b>You lost your seat.</b> <button onclick="D('byel')">Contest by-election $300</button>`:''}</div>`};
+function chart(){const h=G.hist,w=400,ht=110;if(h.length<2)return'<span class=mu>Chart builds monthly.</span>';const x=i=>i*w/(h.length-1),y=v=>ht-v*ht/50;return`<svg viewBox="0 0 ${w} ${ht}" style="width:100%;max-width:560px">${G.P.map((p,k)=>p.dead?'':`<polyline fill="none" stroke="${p.c}" stroke-width="2" points="${h.map((q,i)=>q.p[k]!=null?x(i).toFixed(0)+','+y(q.p[k]).toFixed(0):'').filter(Boolean).join(' ')}"/>`).join('')}<polyline fill="none" stroke="#fff" stroke-dasharray="3" points="${h.map((q,i)=>x(i).toFixed(0)+','+(ht-q.a*ht/100).toFixed(0)).join(' ')}"/></svg>`}
+const T4=()=>{const e=G.eco,pm=G.gov.pm==G.mid;return`<div class=g><div class=pn><h3>National economy</h3>GDP growth ${e.gdp.toFixed(1)}% · Unemployment ${e.un.toFixed(1)}% · Inflation ${e.inf.toFixed(1)}%<br>Tax rate ${e.tax.toFixed(0)}% · Public services ${Math.round(e.serv)}/100<br>Budget balance ${e.bal.toFixed(1)}% GDP · Debt ${e.debt.toFixed(0)}% GDP<br>${pm?`<button onclick="D('tax',1)">Tax +1 (2)</button><button onclick="D('tax',-1)">Tax −1 (2)</button><button onclick="D('serv',5)">Services +5 (2)</button><button onclick="D('serv',-5)">Services −5 (2)</button>`:'<span class=mu>Only the Prime Minister sets the budget.</span>'}</div>
+<div class=pn><h3>Your finances</h3>Funds $${Math.round(G.cash)} · Last month: ${G.fin?`net ${G.fin.net>=0?'+':''}$${Math.round(G.fin.net)} (income tax $${Math.round(G.fin.tx)} at ${G.eco.tax.toFixed(0)}%)`:'not yet paid'}<br>Influence ${Math.round(G.ip)} · Reputation ${Math.round(G.rep)} · Scandal level ${G.scand} ${G.scand?`<button onclick="D('hide')">Hide scandal $200</button>`:''}</div></div><div class=pn><h3>Public opinion (colours = parties, dashed = approval)</h3>${chart()}</div>`};
+const T5=()=>`<div class=pn><h3>The Daily Chronicle</h3>${G.news.map(n=>`<div class=nw><span class=mu>Day ${n.d}</span> ${n.t}</div>`).join('')}</div>`;
+const T6=()=>`<div class=g><div class=pn><h3>Secret objectives</h3>${G.objs.map(i=>`<div>${G.done.includes(i)?'✔':'○'} ${OBJ[i][0]}</div>`).join('')}<div class=mu style="margin-top:6px">Public goal: become Prime Minister and win re-election.</div></div><div class=pn><h3>Offers (AI may be lying)</h3>${G.offers.map((o,i)=>`<div>${nm(mp(o.id))} will "swing" his vote for $${o.cost} <button onclick="D('accept',${i})">Pay</button><button onclick="D('decline',${i})">Refuse</button></div>`).join('')||'<span class=mu>None.</span>'}</div><div class=pn><h3>Your promises</h3>${G.prom.map(p=>`<div>${nm(mp(p.id))}: ministry by day ${p.due} (${p.sincere?'sincere':'bluff'})</div>`).join('')||'<span class=mu>None.</span>'}</div></div>`;
+const T7=()=>`<div class=pn><h3>System</h3><button onclick="D('save')">Save</button><button onclick="if(this.dataset.ok){D('newg')}else{this.dataset.ok=1;this.textContent='Confirm new game?';setTimeout(()=>{this.dataset.ok='';this.textContent='New game'},3000)}">New game</button> <div class=mu>Saves sync to your signed-in account; offline mode saves on this device. US map boundaries load from jsDelivr CDN. Tips: speak for/against bills, whip your party, call Question Time, appoint cabinet ministers from MP profiles (as PM), and watch voter groups drift each month.</div><span class=mu>Keys: 1–8 tabs · N next day · W next week · S save</span></div>${G.mode=='sandbox'?`<div class=pn><h3>Sandbox controls</h3><button onclick="D('sb','cash')">+$1000</button><button onclick="D('sb','ip')">Max influence</button><button onclick="D('sb','ev')">Trigger event</button><button onclick="D('sb','el')">Force election</button><button onclick="D('sb','sp')">Spawn party</button>${G.P.filter(p=>!p.dead).map(p=>`<button onclick="D('sb','pop',[${p.id},4])">${p.n} +4</button>`).join('')}</div>`:''}`;
+const TABS=['Parliament','Bills','Parties','Election','Economy','News','Secrets','System'],TV=[T0,T1,T2,T3,T4,T5,T6,T7];
+/* ===== WORLD: travel, political map, research map ===== */
+const WH='United States of America',WCDN='https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+GV=['Presidential republic','Parliamentary republic','Constitutional monarchy','Semi-presidential republic','Authoritarian regime','One-party state','Theocratic republic','Absolute monarchy','Federal republic'],
+GCOL=['#3b82f6','#22c55e','#a855f7','#06b6d4','#ef4444','#dc2626','#f59e0b','#eab308','#14b8a6'],
+SY='Nor,Sar,Kel,Ven,Dor,Mar,Tal,Ori,Bel,Zan,Cal,Ham,Ros,Tir'.split(','),SU='ia,land,stan,ora,burg,mark,shire,ane'.split(','),
+WK={'United States of America':[335,27.4,0,3.4],'Canada':[40,2.1,2,1.7],'Mexico':[128,1.8,0,.3],'Brazil':[216,2.2,0,1.2],'Argentina':[46,.6,0,.5],'Chile':[19.6,.34,0,.4],'United Kingdom':[68,3.3,2,2.9],'France':[68,3,3,2.2],'Germany':[84,4.5,1,3.1],'Italy':[59,2.2,1,1.5],'Spain':[48,1.6,2,1.4],'Netherlands':[17.6,1.1,2,2.3],'Switzerland':[8.8,.9,8,3.4],'Sweden':[10.5,.6,2,3.4],'Norway':[5.5,.5,2,2.2],'Poland':[37,.8,1,1.5],'Ukraine':[37,.18,3,.9],'Russia':[144,2,4,1],'Turkey':[85,1.1,0,1.3],'China':[1410,17.8,5,2.5],'India':[1430,3.6,1,.7],'Japan':[124,4.2,2,3.3],'South Korea':[52,1.7,0,4.9],'North Korea':[26,.03,5,.5],'Vietnam':[99,.43,5,.4],'Indonesia':[277,1.4,0,.3],'Pakistan':[240,.34,1,.2],'Israel':[9.8,.52,1,5.6],'Saudi Arabia':[36,1.1,7,.5],'Iran':[89,.4,6,.8],'Egypt':[112,.4,4,.2],'Nigeria':[223,.4,0,.2],'Kenya':[55,.11,0,.8],'Ethiopia':[126,.16,8,.3],'South Africa':[60,.4,1,.6],'Australia':[26,1.7,2,1.7]};
+let WF=[],WN={},WP={},WM=null,WPJ=null,WMODE='pol';
+const hs=s=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h>>>0},
+sr=(s,k)=>{let x=hs(s+k)||1;x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296},
+lbl=e=>e<-.25?'left-wing':e>.25?'right-wing':'centrist',
+wc=n=>G.W.c[n]||(G.W.c[n]={rel:Math.round(30+sr(n,8)*30),rs:0,tr:0,vis:0,ld:null,e:null});
+function wd(f){const n=f.properties.name;if(WP[n])return WP[n];const k=WK[n],km=d3.geoArea(f)*40589641,pop=k?k[0]:+Math.max(.1,km*(4+sr(n,1)*160)/1e6).toFixed(1),pc=k?k[1]*1000/pop:1+sr(n,2)*50,gdp=k?k[1]:pop*pc/1000;
+return WP[n]={n,f,pop,gdp,gi:k?k[2]:Math.floor(sr(n,3)*GV.length),rd:k?k[3]:+Math.min(4.5,.1+pc*.04*sr(n,4)*2).toFixed(1),e:(sr(n,5)-.5)*2,s:(sr(n,6)-.5)*2,ey:2+Math.floor(sr(n,7)*4),cap:SY[hs(n+'c')%SY.length]+' City',ld:FN[hs(n+'l')%FN.length]+' '+LN[hs(n+'m')%LN.length],c:d3.geoCentroid(f),km,rgs:null}}
+function wrg(d){if(d.rgs)return d.rgs;const n=d.n,nr=3+Math.floor(sr(n,9)*4)+(d.km>2e6?3:0),b=d3.geoBounds(d.f);let x0=b[0][0],x1=b[1][0];if(x1<x0)x1+=360;const r=[];let tot=0;
+for(let i=0;i<nr;i++){let p=d.c;for(let t=0;t<40;t++){let lo=x0+sr(n,'x'+i+t)*(x1-x0);if(lo>180)lo-=360;const la=b[0][1]+sr(n,'y'+i+t)*(b[1][1]-b[0][1]);if(d3.geoContains(d.f,[lo,la])){p=[lo,la];break}}const sh=5+sr(n,'c'+i)*30;tot+=sh;r.push({n:SY[Math.floor(sr(n,'a'+i)*SY.length)]+SU[Math.floor(sr(n,'b'+i)*SU.length)],ll:p,sh,e:cl(d.e+(sr(n,'d'+i)-.5),-1,1),ct:SY[Math.floor(sr(n,'h'+i)*SY.length)]+'ton'})}
+r.forEach(x=>x.sh=Math.round(x.sh/tot*100));return d.rgs=r}
+const rsc=n=>{const d=WP[n],c=G.W.c[n];return Math.min(100,Math.round(d.rd*18+Math.log10(d.gdp*1000+1)*8+(c?c.rs:0)))};
+const wTip=n=>{const d=WP[n]||wd(WN[n]),c=wc(n);return`<b>${n}</b><br>${GV[d.gi]}<br>Leader ${c.ld||d.ld} (${lbl(c.e!=null?c.e:d.e)})<br>Pop ${d.pop}M · GDP $${d.gdp.toFixed(2)}tn<br>R&amp;D ${d.rd}% · Research ${rsc(n)}/100<br>Relations ${Math.round(c.rel)}${c.tr?' · trade deal':''}`};
+function wRecolor(){if(!WM||!WF.length||!G||!G.W)return;const W=G.W,ps=WM.querySelectorAll('path[data-cn]');for(let k=0;k<ps.length;k++){const n=ps[k].dataset.cn,d=wd(WN[n]),c=wc(n);let f;
+if(WMODE=='pol')f=GCOL[d.gi];else if(WMODE=='ide')f=d3.interpolateRdBu(1-((c.e!=null?c.e:d.e)+1)/2);else if(WMODE=='res')f=d3.interpolateYlGnBu(rsc(n)/100);else f=d3.interpolateRdYlGn(c.rel/100);
+ps[k].setAttribute('fill',f);const h=n==W.loc,s=n==(W.sel||W.loc);ps[k].setAttribute('stroke',h?'#fff':s?'#c9a24b':'#0a101c');ps[k].setAttribute('stroke-width',h||s?1.8:.4)}
+const g=WM.querySelector('#wr'),sel=W.sel||W.loc;if(g){g.innerHTML='';if(WP[sel]&&WPJ){wrg(WP[sel]).forEach((r,i)=>{const p=WPJ(r.ll);if(!p)return;g.insertAdjacentHTML('beforeend',`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i==W.sr?5:3.2}" fill="${i==W.sr?'#c9a24b':'#fff'}" stroke="#000" data-rg="${i}" style="cursor:pointer"/><text x="${(p[0]+6).toFixed(1)}" y="${(p[1]+3).toFixed(1)}" font-size="8" fill="#fff" stroke="#000" stroke-width=".4" paint-order="stroke" pointer-events="none">${r.n}</text>`)})}}}
+function mountW(){const h=$('wm');if(!h)return;if(!WM){const N='http://www.w3.org/2000/svg';WM=document.createElementNS(N,'svg');WM.setAttribute('viewBox','0 0 975 510');WM.style.cssText='width:100%;max-width:980px;display:block;background:#0e1626;border-radius:8px';WM.innerHTML='<text x="487" y="255" text-anchor="middle" fill="#8b8fa0" font-size="14">Loading world map…</text>';
+if(!$('tip')){const tp=document.createElement('div');tp.id='tip';tp.style.cssText='position:fixed;pointer-events:none;background:#0a1220f2;border:1px solid #2a3144;padding:8px 11px;border-radius:8px;font-size:12px;z-index:40;opacity:0;max-width:260px';document.body.appendChild(tp)}
+const tp=$('tip');WM.onmousemove=e=>{const c=e.target.dataset||{};if(!G||!G.W||(!c.cn&&c.rg==null)){tp.style.opacity=0;return}const W=G.W,d=WP[W.sel||W.loc];tp.innerHTML=c.rg!=null?(r=>`<b>${r.n}</b> region<br>${r.sh}% of population · ${lbl(r.e)}<br>Hub: ${r.ct}`)(wrg(d)[+c.rg]):wTip(c.cn);tp.style.opacity=1;tp.style.left=Math.min(e.clientX+12,innerWidth-270)+'px';tp.style.top=Math.min(e.clientY+12,innerHeight-150)+'px'};
+WM.onmouseleave=()=>tp.style.opacity=0;WM.onclick=e=>{const c=e.target.dataset||{};if(c.rg!=null)D('wsr',+c.rg);else if(c.cn)D('wsel',c.cn)};
+const msg=t=>{const x=WM.querySelector('text');x&&(x.textContent=t)};
+if(typeof d3==='undefined'||typeof topojson==='undefined')msg('Map libraries failed to load (needed once, then cached).');else{
+const ini=t=>{WF=topojson.feature(t,t.objects.countries).features.filter(f=>f.properties.name&&f.properties.name!='Antarctica');WPJ=d3.geoNaturalEarth1().fitExtent([[2,2],[973,508]],{type:'Sphere'});const gp=d3.geoPath(WPJ);let s='';WF.forEach(f=>{WN[f.properties.name]=f;s+=`<path d="${gp(f)}" data-cn="${f.properties.name.replace(/"/g,'&quot;')}" stroke-linejoin="round" style="cursor:pointer"/>`});WM.innerHTML=s+'<g id="wr"></g>';if(G&&G.tab==8)render()};
+let ca=null;try{ca=localStorage.getItem('wmap1')}catch(e){}if(ca){try{ini(JSON.parse(ca))}catch(e){ca=null}}
+if(!ca)d3.json(WCDN).then(t=>{try{localStorage.setItem('wmap1',JSON.stringify(t))}catch(e){}ini(t)}).catch(er=>msg('Could not load world map: '+er.message))}}
+h.appendChild(WM);wRecolor()}
+function wpanel(){const W=G.W,n=W.sel||W.loc,d=WP[n]||(WN[n]&&wd(WN[n]));if(!d)return'<div class=pn><span class=mu>Click a country on the map.</span></div>';
+const c=wc(n),here=n==W.loc&&!G.moving,L=WP[W.loc],km=L&&!here?Math.round(d3.geoDistance(d.c,L.c)*6371):0,fc=Math.round(250+km*.12),dy=km>9000?2:1,rg=wrg(d),si=W.sr>=0?rg[W.sr]:null,e=c.e!=null?c.e:d.e,pm=G.gov.pm==G.mid;
+return`<div class=pn><h3>${n}${here?' (you are here)':''}</h3><span class=chip>${GV[d.gi]}</span><span class=chip>Pop ${d.pop}M</span><span class=chip>GDP $${d.gdp>=1?d.gdp.toFixed(1)+'tn':Math.round(d.gdp*1000)+'bn'}</span><span class=chip>R&amp;D ${d.rd}% GDP</span><span class=chip>Research ${rsc(n)}/100</span><span class=chip>Relations ${Math.round(c.rel)}</span>${c.tr?'<span class=chip>Trade deal ✔</span>':''}
+<div class=g><div>Leader <b>${c.ld||d.ld}</b> (${lbl(e)}) · capital ${d.cap}<br>Elections every ${d.ey} years · you have visited ${c.vis}×<div class=bar><i style="width:${c.rel}%"></i></div><b>Regions &amp; states</b> <span class=mu>(click dots on the map too)</span>${rg.map((r,i)=>`<div class=nw style="cursor:pointer" onclick="D('wsr',${i})"><b>${r.n}</b> ${r.sh}% of pop · ${lbl(r.e)} · hub ${r.ct}${i==W.sr?' ◀':''}</div>`).join('')}</div>
+<div>${here?`<button onclick="D('wl','dip')">Diplomatic meeting (1)</button><button onclick="D('wl','trade')">Negotiate trade deal ($150, 2, PM)</button><button onclick="D('wl','res')">Research summit ($120, 2)</button><button onclick="D('wl','don')">Meet diaspora donors (1)</button><button onclick="D('wl','press')">Press conference (1)</button>${si?`<br><button onclick="D('wvr',${W.sr})">Visit ${si.n} ($60, 1 day)</button>`:''}${n==WH?`<br><button onclick="D('tab',3)">Open US state map &amp; campaign</button>`:''}`:`<span class=mu>Distance ~${km} km</span><br><button onclick="D('wgo','${n.replace(/'/g,"\\'")}')">Fly: ${dy} day${dy>1?'s':''} · $${fc}</button>`}</div></div></div>`}
+function T8(){const W=G.W,top=WF.length?WF.map(wd).sort((a,b)=>rsc(b.n)-rsc(a.n)).slice(0,6):[];
+const lg=WMODE=='pol'?GV.map((g,i)=>`<span class=chip style="border-left:8px solid ${GCOL[i]}">${g}</span>`).join(''):WMODE=='ide'?'Blue = left-wing · red = right-wing government':WMODE=='res'?'Darker = stronger research &amp; development':'Green = friendly · red = hostile relations with you';
+return`<div class=pn><h3>World map &amp; travel</h3>${[['pol','Political'],['ide','Ideology'],['res','Research'],['rel','Relations']].map(([k,l])=>`<button class="${WMODE==k?'on':''}" onclick="D('wmode','${k}')">${l}</button>`).join('')} <span class=mu>📍 ${G.moving?'in transit':W.loc}</span><div id=wm></div><div class=mu style="margin-top:4px">${lg} · white outline = you · gold = selected</div></div>${wpanel()}<div class=g><div class=pn><h3>Research leaders</h3>${top.map(d=>`<div>${d.n}: <b>${rsc(d.n)}</b>/100 · R&amp;D ${d.rd}%</div>`).join('')||'<span class=mu>Loading…</span>'}<div class=mu>Global tech level ${W.tech} (research summits lift it, boosting growth).</div></div><div class=pn><h3>Foreign trips</h3>${W.tr.slice(0,8).map(x=>`<div class=nw>Day ${x.d}: ${x.f} → ${x.t}, ${x.days}d, $${x.cost}</div>`).join('')||'<span class=mu>No foreign trips yet.</span>'}</div></div>`}
+const _mg=migr;migr=function(){_mg();if(!G.W)G.W={loc:WH,sel:null,sr:-1,c:{},tr:[],tech:0}};
+function wMonth(){if(!G.W||!WF.length)return;const W=G.W;G.eco.gdp=cl(G.eco.gdp+Math.min(.15,W.tech*.004),-6,10);for(let i=0;i<3;i++){const d=wd(pk(WF)),c=wc(d.n),k=ri(0,4);
+if(k==0){c.ld=pk(FN)+' '+pk(LN);c.e=cl(d.e+(R()-.5)*.8,-1,1);news(`${d.n} holds elections: ${c.ld} takes office promising ${lbl(c.e)} policies.`)}
+else if(k==1){c.rs+=3;news(`A research breakthrough in ${d.n} draws international attention.`)}
+else if(k==2){c.rel=cl(c.rel-5,0,100);news(`Diplomatic tension: ${d.n} criticises recent statements by ${G.pn}'s government.`)}
+else if(k==3){c.rel=cl(c.rel+4,0,100);news(`${d.n} signals warmer ties with the government.`)}
+else{news(`${d.n}'s economy ${R()<.5?'accelerates':'slows'} as ${c.ld||d.ld} adjusts policy.`)}}
+for(const n in W.c)if(W.c[n].tr)W.c[n].rel=cl(W.c[n].rel+.5,0,100)}
+const _mo=month;month=function(){_mo.apply(this,arguments);try{wMonth()}catch(e){}};
+Object.assign(H,{wsel:n=>{G.W.sel=n;G.W.sr=-1;G.tab=8},wsr:i=>{G.W.sr=i},wmode:m=>{WMODE=m},
+wgo:n=>{const W=G.W,A=WP[W.loc],B=WP[n];if(!A||!B||n==W.loc||G.moving)return;const km=Math.round(d3.geoDistance(A.c,B.c)*6371),dy=km>9000?2:1,cost=Math.round(250+km*.12);if(!pay(cost))return;W.tr.unshift({d:G.day,f:W.loc,t:n,days:dy,cost});W.tr.length>20&&W.tr.pop();news(`${G.pn} flies from ${W.loc} to ${n} (${km} km, $${cost}).`);G.moving=1;for(let i=0;i<dy;i++)tick();G.moving=0;W.loc=n;W.sel=n;W.sr=-1;const c=wc(n);c.vis++;c.rel=cl(c.rel+2,0,100);T('Arrived in '+n)},
+wvr:i=>{const W=G.W,d=WP[W.loc],r=wrg(d)[i];if(!r||!spend(1)||!pay(60))return;tick();const c=wc(W.loc);c.rel=cl(c.rel+1,0,100);G.rep=cl(G.rep+1,0,100);news(`${G.pn} tours the ${r.n} region of ${W.loc}, meeting local officials in ${r.ct}.`)},
+wl:k=>{const W=G.W,n=W.loc,c=wc(n),d=WP[n];if(!d)return;
+if(k=='dip'){if(!spend(1))return;c.rel=cl(c.rel+6,0,100);news(`${G.pn} meets ${c.ld||d.ld} in ${d.cap}; relations with ${n} improve.`)}
+else if(k=='trade'){if(G.gov.pm!=G.mid)return T('Only the Prime Minister can sign trade deals');if(c.tr)return T('Trade deal already signed');if(c.rel<40)return T('Relations too cold (40+ needed)');if(!spend(2)||!pay(150))return;c.tr=1;G.eco.gdp=cl(G.eco.gdp+.1,-6,10);G.rep=cl(G.rep+2,0,100);news(`${G.pn} signs a trade agreement with ${n}.`)}
+else if(k=='res'){if(!spend(2)||!pay(120))return;c.rs+=4;W.tech++;G.rep=cl(G.rep+2,0,100);news(`${G.pn} co-hosts a research summit in ${d.cap}, ${n}.`)}
+else if(k=='don'){if(!spend(1))return;const g=Math.round(ri(100,500)*(.5+c.rel/100));G.fund=(G.fund||0)+g;if(R()<.2){G.scand++;G.rep=cl(G.rep-3,0,100);news(`Foreign donations to ${G.pn} in ${n} spark a scandal.`)}else news(`Diaspora donors in ${n} give $${g} to ${G.pn}'s campaign.`)}
+else if(k=='press'){if(!spend(1))return;G.rep=cl(G.rep+1,0,100);G.eco.appr=cl(G.eco.appr+.3,0,100);news(`${G.pn} gives a well-received press conference in ${d.cap}.`)}}});
+TABS.push('World');TV.push(T8);
+
+function render(lt){if(!G){const sv=!!window.PARL_HAS_SAVE;$('top').innerHTML='';$('main').innerHTML=`<h1>PARLIAMENTUM</h1><p class=mu>Seats of Power — win the house, by votes or by whispers.</p><div class=pn><h3>New game</h3>Mode: ${[['career','Career'],['leader','Party Leader'],['sandbox','Sandbox']].map(([k,l])=>`<button class="${cfg.mode==k?'on':''}" onclick="cfg.mode='${k}';render()">${l}</button>`).join('')}<br>Party: ${PD.map((p,i)=>`<button class="${cfg.party==i?'on':''}" onclick="cfg.party=${i};render()">${p.n}</button>`).join('')}<button class="${cfg.party==-1?'on':''}" onclick="cfg.party=-1;render()">+ Custom</button>${cfg.party==-1?`<br><input id=cparty placeholder="Custom party name" value="${$('cparty')?$('cparty').value:''}"> <input id=ccol type=color value="${$('ccol')?$('ccol').value:'#38bdf8'}" style="vertical-align:middle;padding:1px;width:32px;height:26px">`:''}<br><input id=pname placeholder="Your name" value="${$('pname')?$('pname').value:''}"> <button onclick="D0()">Begin</button>${sv?` <button onclick="H.load();render()">Continue saved game</button>`:''}</div>`;return}
+migr();const m=me(),pm=G.gov.pm==G.mid;const y=Math.floor((G.day-1)/360)+1;
+$('top').innerHTML=`<b>${G.pn}</b> · ${pm?'Prime Minister':G.P[m.p].lead==G.mid?'Party leader':'MP'}${m.out?' (no seat)':''} ${G.spd?'<span class=live></span>':''}<span class=chip>Y${y} · Day ${G.day}</span><span class=chip>$${Math.round(G.cash)}</span><span class=chip>IP ${Math.round(G.ip)}</span><span class=chip>Rep ${Math.round(G.rep)}</span><span class=chip>Approval ${Math.round(G.eco.appr)}%</span><span class=chip>Election ${G.nextElec-G.day}d</span><span class=chip>📍 ${G.moving?'in transit':G.W&&G.W.loc!=WH?G.W.loc:G.loc||'DC'}</span><span class=chip>Fund $${Math.round(G.fund||0)}</span> <button class="${!G.spd?'on':''}" onclick="D('spd',0)">⏸</button><button class="${G.spd==1?'on':''}" onclick="D('spd',1)">▶</button><button class="${G.spd==2?'on':''}" onclick="D('spd',2)">▶▶</button><button class="${G.spd==4?'on':''}" onclick="D('spd',4)">▶▶▶</button><button onclick="D('day')">+1 (N)</button><button onclick="D('week')">+7 (W)</button><div class=tk>📰 ${G.news[0]?G.news[0].t:''}</div><div id=nav>${TABS.map((t,i)=>`<button class="${G.tab==i?'on':''}" onclick="D('tab',${i})">${i+1} ${t}</button>`).join('')}</div><div id=toast></div>`;
+if(!lt)$('main').innerHTML=(G.victory?`<div class=pn style="border-color:#c9a24b"><h3>VICTORY</h3>You were re-elected Prime Minister. Keep playing or start anew.</div>`:'')+TV[G.tab]();if(!lt&&G.tab==3)mountMap();if(!lt&&G.tab==8)mountW()}
+function D0(){newGame()}
+(function loop(){try{if(G&&G.spd&&!document.hidden){tick();render((G.rc=(G.rc||0)+1)%5!=0&&G.tab!=5)}}catch(e){if(G)G.spd=0}setTimeout(loop,G&&G.spd?Math.max(320,1100/G.spd):400)})();
+document.addEventListener('keydown',e=>{if(!G||/INPUT/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(k>='1'&&k<='9')D('tab',k-1);else if(k==' '){e.preventDefault();D('spd',G.spd?0:1)}else if(k=='n')D('day');else if(k=='w')D('week');else if(k=='s')D('save')});
+render();
+</script><script>
+/* ===== FOREIGN POLITICS: per-country political map, autonomous leaders, perf ===== */
+const N2I='004AFG008ALB012DZA024AGO031AZE032ARG036AUS040AUT044BHS050BGD051ARM056BEL064BTN068BOL070BIH072BWA076BRA084BLZ090SLB096BRN100BGR104MMR108BDI112BLR116KHM120CMR124CAN140CAF144LKA148TCD152CHL156CHN158TWN170COL178COG180COD188CRI191HRV192CUB196CYP203CZE204BEN208DNK214DOM218ECU222SLV226GNQ231ETH232ERI233EST238FLK242FJI246FIN250FRA260ATF262DJI266GAB268GEO270GMB275PSE276DEU288GHA300GRC304GRL320GTM324GIN328GUY332HTI340HND348HUN352ISL356IND360IDN364IRN368IRQ372IRL376ISR380ITA384CIV388JAM392JPN398KAZ400JOR404KEN408PRK410KOR414KWT417KGZ418LAO422LBN426LSO428LVA430LBR434LBY440LTU442LUX450MDG454MWI458MYS466MLI478MRT484MEX496MNG498MDA499MNE504MAR508MOZ512OMN516NAM524NPL528NLD540NCL554NZL558NIC562NER566NGA578NOR586PAK591PAN598PNG600PRY604PER608PHL616POL620PRT624GNB626TLS630PRI634QAT642ROU643RUS646RWA682SAU686SEN688SRB694SLE703SVK704VNM705SVN706SOM710ZAF716ZWE724ESP728SSD729SDN732ESH740SUR748SWZ752SWE756CHE760SYR762TJK764THA768TGO780TTO784ARE788TUN792TUR795TKM800UGA804UKR807MKD818EGY826GBR834TZA840USA854BFA858URY860UZB862VEN887YEM894ZMB';
+const NM={};for(let i=0;i<N2I.length;i+=6)NM[N2I.substr(i,3)]=N2I.substr(i+3,3);
+const FX={geo:{},busy:{},el:{},nb:{},sel:{},cur:0,v:0},rlk=(a,b)=>a<b?a+'|'+b:b+'|'+a,fxIso=n=>{const f=WN[n];return f&&f.id!=null?NM[String(f.id).padStart(3,'0')]:null};
+const fxProj=o=>d3.geoAzimuthalEqualArea().rotate(d3.geoCentroid(o).map(x=>-x)).fitExtent([[8,8],[967,602]],o);
+function fxBuild(j){const fs=j.features||[],ps=[];fs.forEach((f,i)=>{const g=f.geometry;if(!g)return;(g.type=='Polygon'?[g.coordinates]:g.coordinates).forEach(q=>{let o={type:'Polygon',coordinates:q},a=d3.geoArea(o);if(a>6.2){q.forEach(r=>r.reverse());a=d3.geoArea(o)}ps.push({i,o,a})})});
+if(!ps.length)return null;const tot=ps.reduce((s,p)=>s+p.a,0),mx=ps.reduce((a,b)=>b.a>a.a?b:a),mc=d3.geoCentroid(mx.o),keep=ps.filter(p=>p.a>tot*.02||d3.geoDistance(d3.geoCentroid(p.o),mc)<.4),col={type:'MultiPolygon',coordinates:keep.map(p=>p.o.coordinates)},gp=d3.geoPath(fxProj(col)).digits(1),by={};
+keep.forEach(p=>(by[p.i]=by[p.i]||[]).push(p.o.coordinates));
+return{src:1,r:Object.keys(by).map(i=>{const m={type:'MultiPolygon',coordinates:by[i]},pr=fs[i].properties||{};return{n:pr.shapeName||'Region '+(+i+1),d:gp(m),ll:d3.geoCentroid(m),c:gp.centroid(m),a:d3.geoArea(m)}})}}
+function fxVoro(n){const f=WN[n],P=fxProj(f),b=d3.geoBounds(f),pts=[],N=6+Math.floor(sr(n,'vn')*6);let x0=b[0][0],x1=b[1][0];if(x1<x0)x1+=360;
+for(let i=0;i<N;i++)for(let t=0;t<60;t++){let lo=x0+sr(n,'vx'+i+t)*(x1-x0);if(lo>180)lo-=360;const la=b[0][1]+sr(n,'vy'+i+t)*(b[1][1]-b[0][1]);if(d3.geoContains(f,[lo,la])){pts.push([lo,la]);break}}
+while(pts.length<3)pts.push(d3.geoCentroid(f).map(x=>x+pts.length*.01));const xy=pts.map(p=>P(p)),V=d3.Delaunay.from(xy).voronoi([0,0,975,610]);
+return{src:0,clip:d3.geoPath(P).digits(1)(f),r:xy.map((p,i)=>({n:SY[Math.floor(sr(n,'va'+i)*SY.length)]+SU[Math.floor(sr(n,'vb'+i)*SU.length)],d:V.renderCell(i),ll:pts[i],c:p,a:.01+sr(n,'vw'+i)}))}}
+async function fxLoad(n){if(FX.geo[n]||FX.busy[n]||!WN[n])return;FX.busy[n]=1;const c=fxIso(n),key='gx1_'+c;
+try{let s=null;try{s=localStorage.getItem(key)}catch(e){}if(s)FX.geo[n]=JSON.parse(s);else if(c){const m=await(await fetch('https://www.geoboundaries.org/api/current/gbOpen/'+c+'/ADM1/')).json(),u=(Array.isArray(m)?m[0]:m).simplifiedGeometryGeoJSON,g=fxBuild(await(await fetch(u)).json());if(g){FX.geo[n]=g;try{localStorage.setItem(key,JSON.stringify(g))}catch(e){}}}}catch(e){}
+if(!FX.geo[n])try{FX.geo[n]=fxVoro(n)}catch(e){}
+FX.busy[n]=0;if(WP[n])WP[n].rgs=null;if(G&&G.tab==3&&G.W&&G.W.loc==n)render()}
+function fxK(n){const c=wc(n),g=FX.geo[n],d=WP[n];if(!g||!d)return null;if(c.k&&c.k.rg.length==g.r.length)return c.k;
+const ps=PARTY_LIB.slice().sort((a,b)=>Math.hypot(a.e-d.e,a.s-d.s)+sr(n,a.n)*.8-Math.hypot(b.e-d.e,b.s-d.s)-sr(n,b.n)*.8).slice(0,3+Math.floor(sr(n,'np')*3)).map((p,i)=>({n:p.n,c:p.c,e:p.e,s:p.s,pop:20+sr(n,'p'+i)*25}));
+const k={ps,rg:g.r.map((r,i)=>({l:(sr(n,'l'+i)-.5)*2,off:ps.map((_,j)=>(sr(n,'o'+i+j)-.5)*14),gv:FN[hs(n+'g'+i)%FN.length]+' '+LN[hs(n+'h'+i)%LN.length]})),pm:0,next:G.day+d.ey*360-Math.floor(sr(n,'nx')*300)};
+k.pm=k.ps.reduce((b,p,i)=>p.pop>k.ps[b].pop?i:b,0);return c.k=k}
+function fxInfo(n,i){const k=wc(n).k,r=k.rg[i],v=k.ps.map((p,j)=>Math.max(1,p.pop+r.off[j]-p.e*r.l*18)),s=v.reduce((a,b)=>a+b),sh=v.map(x=>x/s*100),o=sh.map((_,j)=>j).sort((a,b)=>sh[b]-sh[a]);return{sh,lead:o[0],mg:sh[o[0]]-(sh[o[1]]||0)}}
+const _wrg=wrg;wrg=function(d){const g=FX.geo[d.n];if(!g)return _wrg(d);if(d.rgs&&d.rgs.fx)return d.rgs;const w=g.r.map(r=>Math.sqrt(r.a)),t=w.reduce((a,b)=>a+b)||1,k=fxK(d.n);let l=g.r.map((r,i)=>({n:r.n,ll:r.ll,sh:Math.max(1,Math.round(w[i]/t*100)),e:k?k.ps[fxInfo(d.n,i).lead].e:d.e,ct:r.n}));l=l.sort((a,b)=>b.sh-a.sh).slice(0,14);l.fx=1;return d.rgs=l};
+function fxT3(n){const d=WP[n]||wd(WN[n]),c=wc(n),g=FX.geo[n];if(!g){fxLoad(n);return`<div class=pn><h3>${n}: political map</h3><span class=mu>Loading regional map of ${n}…</span></div>`}
+const k=fxK(n),cnt=k.ps.map(()=>0);g.r.forEach((_,i)=>cnt[fxInfo(n,i).lead]++);const si=FX.sel[n]!=null&&g.r[FX.sel[n]]?FX.sel[n]:-1,pers=PT[hs(n+'P')%7],obj=OB[hs(n+'O')%5],nx=Math.max(0,k.next-G.day);let sp='';
+if(si>=0){const r=g.r[si],q=k.rg[si],f=fxInfo(n,si);sp=`<div class=pn><h3>${r.n}${n==G.W.loc?'':''}</h3>Regional governor <b>${q.gv}</b> (${k.ps[k.pm].n}) · leading: <b style="color:${k.ps[f.lead].c}">${k.ps[f.lead].n}</b> by ${f.mg.toFixed(1)} pts${f.mg<2.5?' (marginal)':''}${k.ps.map((p,j)=>`<div>${p.n} ${f.sh[j].toFixed(1)}%<div class=bar><i style="width:${f.sh[j]*2}%;background:${p.c}"></i></div></div>`).join('')}<button onclick="D('fvr',${si})">Tour region ($60, 1 IP)</button><button onclick="D('fgov',${si})">Meet governor (1 IP)</button></div>`}
+return`<div class=pn><h3>${n}: political map</h3><span class=chip>${GV[d.gi]}</span><span class=chip>Pop ${d.pop}M</span><span class=chip>Leader ${c.ld||d.ld} (${pers}, wants ${obj})</span><span class=chip>Governing: ${k.ps[k.pm].n}</span><span class=chip>Election in ${nx}d</span><span class=chip>Relations ${Math.round(c.rel)}</span>
+<div id=fm></div><div class=mu>Colour = party leading each region · purple = margin under 2.5 pts · gold = selected · click a region. ${g.src?'Borders: geoBoundaries (CC BY 4.0).':'Offline fallback: real national border, approximate regions.'} Parties, leaders and polls are simulated.</div>
+<div class=g>${k.ps.map((p,i)=>`<div><span style="color:${p.c}">${p.n}</span>: ${p.pop.toFixed(1)}% · <b>${cnt[i]}</b> regions${i==k.pm?' ★':''}</div>`).join('')}</div><button onclick="D('tab',8)">World map &amp; travel</button></div>${sp}
+<div class=pn><h3>Local news</h3>${G.news.filter(x=>x.t.includes(n)).slice(0,4).map(x=>`<div class=nw><span class=mu>Day ${x.d}</span> ${x.t}</div>`).join('')||'<span class=mu>Quiet.</span>'}</div>`}
+function fxMount(n){const h=$('fm'),g=FX.geo[n];if(!h||!g)return;let e=FX.el[n];if(!e){const N='http://www.w3.org/2000/svg';e=FX.el[n]=document.createElementNS(N,'svg');e.setAttribute('viewBox','0 0 975 610');e.style.cssText='width:100%;max-width:880px;display:block;background:#0e1626;border-radius:8px';
+const top=g.r.map((r,i)=>i).sort((a,b)=>g.r[b].a-g.r[a].a).slice(0,14);e.innerHTML=(g.clip?`<defs><clipPath id=fcp><path d="${g.clip}"/></clipPath></defs><g clip-path="url(#fcp)">`:'<g>')+g.r.map((r,i)=>`<path d="${r.d}" data-i="${i}" stroke="#0a101c" stroke-width="1" stroke-linejoin="round" style="cursor:pointer"/>`).join('')+'</g>'+(g.clip?`<path d="${g.clip}" fill="none" stroke="#0a101c" stroke-width="1.5"/>`:'')+'<g pointer-events="none" font-size="11" fill="#fff" stroke="#000" stroke-width=".5" paint-order="stroke" text-anchor="middle">'+top.map(i=>g.r[i].c&&isFinite(g.r[i].c[0])?`<text x="${g.r[i].c[0].toFixed(0)}" y="${g.r[i].c[1].toFixed(0)}">${g.r[i].n}</text>`:'').join('')+'</g>';
+let q=0,ev;e.onmousemove=x=>{ev=x;if(q)return;q=requestAnimationFrame(()=>{q=0;const t=$('tip'),i=ev.target.dataset&&ev.target.dataset.i;if(i==null||!G||!G.W||!wc(n).k){t&&(t.style.opacity=0);return}const f=fxInfo(n,+i),k=wc(n).k;t.innerHTML=`<b>${g.r[i].n}</b><br>Governor ${k.rg[i].gv}<br>Leading: ${k.ps[f.lead].n} (+${f.mg.toFixed(1)})<br>${k.ps.map((p,j)=>p.n.split(' ')[0]+' '+f.sh[j].toFixed(0)).join(' · ')}`;t.style.opacity=1;t.style.left=Math.min(ev.clientX+12,innerWidth-270)+'px';t.style.top=Math.min(ev.clientY+12,innerHeight-120)+'px'})};
+e.onmouseleave=()=>{const t=$('tip');t&&(t.style.opacity=0)};e.onclick=x=>{const i=x.target.dataset&&x.target.dataset.i;if(i!=null)D('fsel',n,+i)}}
+h.appendChild(e);fxPaint(n)}
+function fxPaint(n){const e=FX.el[n],k=wc(n).k;if(!e||!k)return;const ps=e.querySelectorAll('path[data-i]'),s=FX.sel[n];for(let j=0;j<ps.length;j++){const i=+ps[j].dataset.i,f=fxInfo(n,i);ps[j].setAttribute('fill',f.mg<2.5?'#6d28d9':k.ps[f.lead].c);ps[j].setAttribute('stroke',i==s?'#c9a24b':'#0a101c');ps[j].setAttribute('stroke-width',i==s?2.5:1)}}
+/* autonomous leaders: each country's leader has traits + goals and acts on their own */
+function fxNb(n){return FX.nb[n]||(FX.nb[n]=WF.filter(f=>f.properties.name!=n).map(f=>[d3.geoDistance(WP[n].c,wd(f).c),f.properties.name]).sort((a,b)=>a[0]-b[0]).slice(0,6).map(x=>x[1]))}
+function fxElect(n){const d=WP[n],c=wc(n),k=c.k,auth=[4,5,7].includes(d.gi);k.ps.forEach(p=>p.pop=Math.max(3,p.pop+(R()-.5)*(auth?1:8)));const w=auth?k.pm:k.ps.reduce((b,p,i)=>p.pop>k.ps[b].pop?i:b,0);k.pm=w;c.ld=pk(FN)+' '+pk(LN);c.e=cl(k.ps[w].e,-1,1);k.next=G.day+d.ey*360;k.rg.forEach(r=>r.off=r.off.map(x=>x*.4));news(auth?`${n} stages a managed election; ${k.ps[w].n} claims victory under ${c.ld}.`:`${n} votes: ${k.ps[w].n} wins and ${c.ld} becomes leader.`)}
+function fxAct(d){const n=d.n,c=wc(n),W=G.W,k=c.k,pers=PT[hs(n+'P')%7],obj=OB[hs(n+'O')%5],auth=[4,5,7].includes(d.gi),ld=c.ld||d.ld,m=pk(fxNb(n)),key=rlk(n,m),w=[2,1,1,1,2,1,1];
+if(obj=='wealth')w[0]+=3;if(obj=='revenge')w[1]+=3;if(obj=='ideology')w[2]+=3;if(obj=='post')w[6]+=2;if(pers=='diplomatic')w[0]+=2;if(pers=='aggressive')w[1]+=2;if(pers=='corrupt')w[3]+=2;
+let t=R()*w.reduce((a,b)=>a+b),a=0;while(a<6&&t>=w[a]){t-=w[a];a++}
+if(a==0){W.rl[key]=(W.rl[key]||0)+15;c.rs+=1;wc(m).rs+=1;news(`${ld} of ${n} signs a trade pact with ${m}.`)}
+else if(a==1){W.rl[key]=(W.rl[key]||0)-20;wc(m).rel=cl(wc(m).rel-1,0,100);news(`${n} imposes sanctions on ${m} as ${ld} escalates a dispute.`)}
+else if(a==2){c.e=cl((c.e!=null?c.e:d.e)+(R()-.5)*.6,-1,1);if(k){const b=k.ps.reduce((q,p,i)=>Math.abs(p.e-c.e)<Math.abs(k.ps[q].e-c.e)?i:q,0);k.ps[b].pop+=3}news(`${ld} steers ${n} toward ${lbl(c.e)} policy.`)}
+else if(a==3){if(k)k.ps[k.pm].pop=Math.max(3,k.ps[k.pm].pop-3);news(`A corruption scandal engulfs ${ld} in ${n}.`)}
+else if(a==4){const rg=pk(wrg(d));if(k)k.rg.forEach((r,i)=>{if(g_n(n,i)==rg.n)r.off[k.pm]-=4});news(`Protests erupt in ${rg.n}, ${n}, against ${ld}'s government.`)}
+else if(a==5){c.rs+=2;news(`${n} announces a major research programme under ${ld}.`)}
+else if(auth&&R()<.5){c.ld=pk(FN)+' '+pk(LN);news(`A palace shake-up in ${n}: ${c.ld} replaces ${ld}.`)}
+else if(k)k.next=Math.min(k.next,G.day+15),news(`${ld} calls a snap election in ${n}.`);
+else{c.ld=pk(FN)+' '+pk(LN);c.e=cl(d.e+(R()-.5)*.8,-1,1);news(`${n} holds elections: ${c.ld} takes office promising ${lbl(c.e)} policies.`)}}
+const g_n=(n,i)=>FX.geo[n]&&FX.geo[n].r[i]?FX.geo[n].r[i].n:'';
+wMonth=function(){if(!G.W||!WF.length)return;const W=G.W;W.rl=W.rl||{};G.eco.gdp=cl(G.eco.gdp+Math.min(.15,W.tech*.004),-6,10);
+for(let i=0;i<8;i++)try{fxAct(wd(WF[FX.cur++%WF.length]))}catch(e){}
+for(const n in W.c){const c=W.c[n];if(c.tr)c.rel=cl(c.rel+.5,0,100);const k=c.k;if(k&&WP[n]){k.ps.forEach(p=>p.pop=cl(p.pop+(R()-.5)*1.5,3,70));try{if(R()<.5)fxAct(WP[n]);if(G.day>=k.next)fxElect(n)}catch(e){}}}FX.v++};
+Object.assign(H,{fsel:(n,i)=>{FX.sel[n]=i;G.tab=3},fgov:i=>{const n=G.W.loc,k=wc(n).k;if(!k||!spend(1))return;const c=wc(n);c.rel=cl(c.rel+3,0,100);news(`${G.pn} meets governor ${k.rg[i].gv} of ${g_n(n,i)}, ${n}.`)},fvr:i=>{const n=G.W.loc,k=wc(n).k;if(!k||!spend(1)||!pay(60))return;tick();wc(n).rel=cl(wc(n).rel+1,0,100);G.rep=cl(G.rep+1,0,100);news(`${G.pn} tours ${g_n(n,i)}, ${n}.`)}});
+const _wg=H.wgo;H.wgo=n=>{_wg(n);fxLoad(n)};
+const _T3=TV[3];TV[3]=()=>{const n=G.W&&G.W.loc;return!n||n==WH||G.moving?_T3():fxT3(n)};
+/* performance: coalesce renders to one per frame, skip redundant recolours, debounce saves, throttle tooltips */
+const _rn=render;let rq=0,rl=1;render=function(lt){if(!lt)rl=0;if(rq)return;rq=requestAnimationFrame(()=>{rq=0;const l=rl;rl=1;_rn(l);if(!l&&G){if(G.tab==3&&G.W&&G.W.loc!=WH&&!G.moving)fxMount(G.W.loc);if(WM&&!WM._p){WM._p=1;const o=WM.onmousemove;let q=0,ev;WM.onmousemove=e=>{ev=e;if(q)return;q=requestAnimationFrame(()=>{q=0;o(ev)})}}}})};
+const _D=D;D=function(){FX.v++;return _D.apply(this,arguments)};
+const _wr=wRecolor;let wsig='';wRecolor=function(){const W=G&&G.W;if(!W)return;const s=WMODE+'|'+W.loc+'|'+W.sel+'|'+W.sr+'|'+FX.v+'|'+Math.floor(G.day/4);if(s==wsig)return;wsig=s;_wr()};
+const _sv=save;let svt=0;save=function(){clearTimeout(svt);svt=setTimeout(_sv,1500)};addEventListener('pagehide',()=>{clearTimeout(svt);_sv()});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(svt);_sv()}});
+</script><script>
+/* Parliamentum multiplayer bridge: Supabase Auth, cloud saves, rooms, Realtime and secure RPCs. */
+(() => {
+  'use strict';
+  const cfg = window.PARLIAMENTUM_CONFIG || {};
+  const url = String(cfg.supabaseUrl || '').trim();
+  const anonKey = String(cfg.supabaseAnonKey || '').trim();
+  const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) && anonKey.length > 20;
+  const client = configured && window.supabase?.createClient
+    ? window.supabase.createClient(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        realtime: { params: { eventsPerSecond: 8 } }
+      })
+    : null;
+
+  const state = {
+    client, user: null, profile: null, room: null, roomPlayers: [], messages: [], bills: [],
+    votes: [], deals: [], shared: [], muted: new Set(), realtime: null, isHost: false,
+    chatChannel: 'room', chatTarget: '', busy: false, offline: false, status: 'Not connected',
+    lastClockDay: 1, lastClockAt: 0, lastActionAt: 0, presenceTimer: null, refreshTimer: null, seenSharedVersions: new Map(), resolvingBills: new Set()
+  };
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const message = value => { const el = $('toast'); if (el) el.textContent = String(value || '').slice(0, 240); };
+  const errorText = err => String(err?.message || err || 'Unexpected error').replace(/[\r\n]+/g, ' ').slice(0, 220);
+  const online = () => !!(state.client && state.user && !state.offline);
+  const ownParty = () => state.roomPlayers.find(p => p.user_id === state.user?.id)?.party || state.profile?.party || 'Independent';
+  const gameLocation = () => G?.W?.loc || G?.loc || 'USA';
+  const num = (x, fallback=0) => Number.isFinite(Number(x)) ? Number(x) : fallback;
+
+  window.PARL_OFFLINE = false;
+  window.PARL_HAS_SAVE = false;
+  window.PARL_LOAD = () => {
+    if (!state.offline) return false;
+    try { const raw = localStorage.getItem('parl1'); if (raw) { G = JSON.parse(raw); G.spd = 0; return true; } }
+    catch (_) { message('The offline save could not be read.'); }
+    return false;
+  };
+  let saveTimer = 0, pendingSave = null;
+  async function flushSave() {
+    if (!pendingSave || !online()) return;
+    const game = pendingSave; pendingSave = null;
+    try {
+      const { error } = await state.client.from('saves').upsert({ user_id: state.user.id, game, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      if (error) throw error;
+      window.PARL_HAS_SAVE = true;
+    } catch (err) {
+      console.warn('Cloud save failed:', errorText(err));
+      // Keep the campaign playable during a service outage; this local copy is used only in offline mode.
+      try { localStorage.setItem('parl1', JSON.stringify(game)); window.PARL_HAS_SAVE = true; } catch (_) {}
+      message('Cloud save unavailable — a local solo copy was saved on this device. Switch to offline mode to continue.');
+    }
+  }
+  window.PARL_SAVE = game => {
+    if (!game) return;
+    if (online()) {
+      try { pendingSave = JSON.parse(JSON.stringify(game)); } catch (_) { pendingSave = game; }
+      clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 450);
+    } else if (state.offline) {
+      try { localStorage.setItem('parl1', JSON.stringify(game)); window.PARL_HAS_SAVE = true; } catch (_) { message('Could not save on this device.'); }
+    }
+  };
+  window.addEventListener('pagehide', () => { clearTimeout(saveTimer); flushSave(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(saveTimer); flushSave(); } });
+
+  function authOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'parl-auth';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#0b0e14ee;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+    overlay.innerHTML = `<form id="parl-auth-form" class="pn" style="width:min(390px,100%);padding:18px">
+      <h3 style="font-size:18px">Parliamentum — player account</h3>
+      <div class="mu" style="margin:6px 0 10px">Sign in each visit. Your campaign save follows your account across devices.</div>
+      <label for="parl-user">Username</label><input id="parl-user" autocomplete="username" maxlength="20" required pattern="[A-Za-z0-9_]{3,20}" placeholder="3–20 letters, numbers or _" style="width:100%;margin:4px 0 9px">
+      <label for="parl-pass">Password</label><input id="parl-pass" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters" style="width:100%;margin:4px 0 10px">
+      <button id="parl-auth-submit" type="submit" style="width:100%;padding:9px">Sign in</button>
+      <button id="parl-auth-toggle" type="button" style="width:100%;margin-top:5px">Create an account</button>
+      <div id="parl-auth-error" role="alert" style="color:#e58b81;min-height:34px;margin-top:8px"></div>
+      <div id="parl-auth-note" class="mu" style="font-size:12px;margin-top:5px">Your username is mapped to a private synthetic login address. Passwords are sent only to Supabase Auth and are never saved by this game.</div>
+      <div style="border-top:1px solid #2a3144;margin-top:12px;padding-top:10px">
+        <div class="mu" style="font-size:12px;margin-bottom:5px">Offline solo mode works without Supabase. Offline saves stay on this device.</div>
+        <button id="parl-offline" type="button" style="width:100%">Play offline / solo</button>
+      </div>
+    </form>`;
+    document.body.appendChild(overlay);
+    let mode = 'signin';
+    const form = $('parl-auth-form');
+    const toggle = $('parl-auth-toggle');
+    const submit = $('parl-auth-submit');
+    const err = $('parl-auth-error');
+    if (!configured) {
+      err.textContent = 'Cloud accounts are not configured yet. Add your Supabase project URL and publishable/anon key in PARLIAMENTUM_CONFIG to enable online play.';
+      $('parl-auth-note').textContent = 'No Supabase project was available when this build was prepared. Offline play remains available.';
+    }
+    toggle.addEventListener('click', () => {
+      mode = mode === 'signin' ? 'signup' : 'signin';
+      submit.textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+      toggle.textContent = mode === 'signin' ? 'Create an account' : 'I already have an account';
+      $('parl-pass').autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
+      err.textContent = '';
+    });
+    $('parl-offline').addEventListener('click', () => {
+      state.offline = true; window.PARL_OFFLINE = true; window.PARL_HAS_SAVE = !!localStorage.getItem('parl1');
+      overlay.remove(); render();
+    });
+    form.addEventListener('submit', async event => {
+      event.preventDefault(); err.textContent = '';
+      if (!configured || !client) { err.textContent = 'Cloud login is unavailable. Use offline mode or configure Supabase first.'; return; }
+      const username = $('parl-user').value.trim().toLowerCase();
+      const password = $('parl-pass').value;
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) { err.textContent = 'Username must be 3–20 characters: a–z, 0–9 or underscore.'; return; }
+      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+      submit.disabled = true; toggle.disabled = true;
+      try {
+        const email = `${username}@parliamentum.invalid`;
+        if (mode === 'signup') {
+          const { data, error } = await client.auth.signUp({ email, password, options: { data: { username } } });
+          if (error) throw error;
+          if (!data.session) throw new Error('Supabase email confirmation is still enabled. Disable “Confirm email” in Authentication → Sign In / Providers → Email before creating username-only accounts.');
+          state.user = data.user || data.session.user;
+        } else {
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+          if (error) throw new Error('Incorrect username or password.');
+          state.user = data.user;
+        }
+        const { data: existing, error: readError } = await client.from('profiles').select('user_id,username,party,colour').eq('user_id', state.user.id).maybeSingle();
+        if (readError) throw readError;
+        if (existing) {
+          if (existing.username !== username) throw new Error('This account is linked to a different username.');
+          state.profile = existing;
+        } else {
+          const { data: created, error: createError } = await client.from('profiles').insert({ user_id: state.user.id, username, party: 'Independent', colour: '#38bdf8' }).select('user_id,username,party,colour').single();
+          if (createError) throw createError;
+          state.profile = created;
+        }
+        state.offline = false; window.PARL_OFFLINE = false;
+        await loadCloudSave();
+        $('parl-pass').value = '';
+        overlay.remove(); render();
+        await resumeRoom();
+      } catch (e) {
+        state.user = null; state.profile = null;
+        try { await client.auth.signOut({ scope:'local' }); } catch (_) {}
+        err.textContent = errorText(e);
+      } finally { $('parl-pass').value = ''; submit.disabled = false; toggle.disabled = false; }
+    });
+  }
+
+  async function loadCloudSave() {
+    if (!online()) return;
+    const { data, error } = await state.client.from('saves').select('game,updated_at').eq('user_id', state.user.id).maybeSingle();
+    if (error) throw error;
+    window.PARL_HAS_SAVE = !!data?.game;
+    if (data?.game && typeof data.game === 'object') { G = data.game; G.spd = 0; render(); }
+  }
+
+  async function withError(promise, successMessage) {
+    try { const result = await promise; if (result?.error) throw result.error; if (successMessage) message(successMessage); return result?.data; }
+    catch (err) { message(errorText(err)); console.error(err); return null; }
+  }
+
+  async function createRoom() {
+    if (!online()) return message('Sign in to create an online room.');
+    const name = ($('mp-room-name')?.value || `${state.profile.username}'s Parliament`).trim();
+    const data = await withError(client.rpc('create_room', { p_name: name, p_settings: { game: 'parliamentum', version: 1 } }));
+    if (!data) return;
+    await enterRoom(data.room_id, data.code, data.name, state.user.id);
+    message(`Room created. Share code ${data.code}.`);
+  }
+
+  async function joinRoom() {
+    if (!online()) return message('Sign in to join an online room.');
+    const code = ($('mp-room-code')?.value || '').trim().toUpperCase();
+    const role = $('mp-role')?.value || 'mp';
+    const party = ($('mp-party')?.value || state.profile.party || 'Independent').trim();
+    const data = await withError(client.rpc('join_room', { p_code: code, p_role: role, p_party: party }));
+    if (!data) return;
+    await enterRoom(data.room_id, data.code, data.name, data.host_id);
+  }
+
+  async function resumeRoom() {
+    if (!online()) return;
+    const { data, error } = await client.from('room_players').select('room_id,role,party,joined_at').eq('user_id', state.user.id).order('joined_at', { ascending: false }).limit(1);
+    if (error || !data?.length) return;
+    const roomData = await withError(client.from('rooms').select('id,code,name,host_id').eq('id', data[0].room_id).maybeSingle());
+    if (roomData) await enterRoom(roomData.id, roomData.code, roomData.name, roomData.host_id);
+  }
+
+  async function enterRoom(id, code, name, hostId) {
+    if (!online()) return;
+    if (state.realtime) { try { await client.removeChannel(state.realtime); } catch (_) {} }
+    state.room = { id, code, name, hostId };
+    state.isHost = hostId === state.user.id;
+    state.messages = []; state.roomPlayers = []; state.bills = []; state.deals = []; state.shared = []; state.muted.clear(); state.seenSharedVersions.clear(); state.resolvingBills.clear();
+    await Promise.all([refreshRoomData(), refreshChat()]);
+    state.realtime = client.channel(`parliamentum-room-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+        const row = payload.new || payload.old;
+        if (payload.eventType === 'INSERT' && (row.room_id === id || row.channel === 'global')) {
+          if (row.from_id !== state.user.id && !state.muted.has(row.from_id)) state.messages.push(row);
+          if (state.messages.length > 100) state.messages.splice(0, state.messages.length - 100);
+          updateMultiplayerPanel();
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${id}` }, refreshRoomData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presence', filter: `room_id=eq.${id}` }, refreshRoomData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shared_state', filter: `room_id=eq.${id}` }, onSharedState)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bills', filter: `room_id=eq.${id}` }, refreshRoomData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_deals', filter: `room_id=eq.${id}` }, refreshRoomData)
+      .subscribe(status => { state.status = status.toLowerCase(); updateMultiplayerPanel(); });
+    clearInterval(state.presenceTimer);
+    state.presenceTimer = setInterval(publishPresence, 5000);
+    clearInterval(state.refreshTimer);
+    state.refreshTimer = setInterval(refreshRoomData, 8000);
+    await publishPresence();
+    render();
+  }
+
+  async function refreshRoomData() {
+    if (!online() || !state.room) return;
+    const id = state.room.id;
+    try {
+      const [players, presence, profiles, wallets, bills, votes, deals, shared, mutes] = await Promise.all([
+        client.from('room_players').select('user_id,role,party,joined_at').eq('room_id', id),
+        client.from('presence').select('user_id,location,approval,cash,day,seats,days_pm,updated_at').eq('room_id', id),
+        client.from('profiles').select('user_id,username,colour,party').limit(100),
+        client.from('player_wallets').select('user_id,balance').eq('room_id', id),
+        client.from('bills').select('*').eq('room_id', id).order('created_at', { ascending: false }).limit(30),
+        client.from('votes').select('bill_id,user_id,vote').eq('room_id', id),
+        client.from('player_deals').select('*').eq('room_id', id).order('created_at', { ascending: false }).limit(30),
+        client.from('shared_state').select('key,value,version,updated_at').eq('room_id', id),
+        client.from('player_mutes').select('muted_user_id').eq('room_id', id).eq('user_id', state.user.id)
+      ]);
+      for (const item of [players,presence,profiles,wallets,bills,votes,deals,shared,mutes]) if (item.error) throw item.error;
+      const profileMap = new Map((profiles.data || []).map(p => [p.user_id,p]));
+      const presenceMap = new Map((presence.data || []).map(p => [p.user_id,p]));
+      const walletMap = new Map((wallets.data || []).map(p => [p.user_id,p]));
+      state.roomPlayers = (players.data || []).map(p => ({ ...p, profile: profileMap.get(p.user_id) || {}, presence: presenceMap.get(p.user_id) || {}, wallet: walletMap.get(p.user_id) || {} }));
+      state.bills = bills.data || []; state.votes = votes.data || []; state.deals = deals.data || []; state.shared = shared.data || [];
+      if (G) state.bills.forEach(applyResolvedBill);
+      state.muted = new Set((mutes.data || []).map(m => m.muted_user_id));
+      // Replay new versioned room state once when joining late; Realtime updates use the same path.
+      for (const row of state.shared) if (num(row.version,0) > num(state.seenSharedVersions.get(row.key),0)) await onSharedState({new:row});
+      const clock = state.shared.find(x => x.key === 'clock')?.value;
+      if (clock && !state.isHost && G) {
+        const day = num(clock.day, G.day);
+        if (day >= G.day) G.day = day;
+        G.spd = clock.paused ? 0 : num(clock.speed, 1);
+      }
+      updateMultiplayerPanel();
+      // A member can resolve any bill at/after the server-published room day. The RPC row-locks and is idempotent.
+      const roomDay = num(clock?.day, G?.day || 1);
+      for (const bill of state.bills) {
+        if (bill.status === 'open' && roomDay >= num(bill.deadline_day, 10000001) && !state.resolvingBills.has(bill.id)) {
+          state.resolvingBills.add(bill.id);
+          client.rpc('resolve_room_vote', {p_bill_id:bill.id}).then(({error})=>{ if (error) console.warn('Automatic bill resolution:',errorText(error)); }).finally(()=>state.resolvingBills.delete(bill.id));
+        }
+      }
+    } catch (err) { console.warn('Room refresh failed:', errorText(err)); }
+  }
+
+  async function refreshChat() {
+    if (!online()) return;
+    const { data, error } = await client.from('messages').select('id,room_id,channel,from_id,to_id,body,created_at').order('created_at', { ascending: true }).limit(100);
+    if (error) { console.warn(errorText(error)); return; }
+    state.messages = (data || []).filter(m => !state.muted.has(m.from_id));
+    updateMultiplayerPanel();
+  }
+
+  async function publishPresence() {
+    if (!online() || !state.room || !G) return;
+    try {
+      const seats = me()?.out ? 0 : (typeof sOf === 'function' ? sOf(me().p) : 0);
+      const { error } = await client.rpc('set_presence', {
+        p_room_id: state.room.id, p_location: String(gameLocation()).slice(0,80),
+        p_approval: Math.max(0, Math.min(100, num(G.eco?.appr,50))),
+        p_cash: Math.max(0, Math.min(1000000000000, Math.round(num(G.cash,0)))),
+        p_day: Math.max(1, Math.min(10000000, Math.round(num(G.day,1)))),
+        p_seats: Math.max(0, Math.min(10000, Math.round(seats))),
+        p_days_pm: Math.max(0, Math.min(10000000, Math.round(num(G.daysPM,0))))
+      });
+      if (error) throw error;
+    } catch (err) { console.warn('Presence update failed:', errorText(err)); }
+  }
+
+  async function sendChat() {
+    if (!online()) return message('Sign in to chat.');
+    const input = $('mp-message'); const body = input?.value?.trim();
+    if (!body) return;
+    const channelName = $('mp-chat-channel')?.value || 'room';
+    const toId = channelName === 'dm' ? ($('mp-chat-target')?.value || null) : null;
+    if (channelName !== 'global' && !state.room) return message('Join a room to use this channel.');
+    const { data, error } = await client.rpc('send_room_message', {
+      p_room_id: channelName === 'global' ? null : state.room.id,
+      p_channel: channelName, p_to_id: toId, p_body: body.slice(0,300)
+    });
+    if (error) return message(errorText(error));
+    input.value = ''; await refreshChat();
+  }
+
+  async function gift() {
+    if (!state.room) return message('Join a room first.');
+    const to = $('mp-target')?.value; const amount = Math.floor(num($('mp-gift-amount')?.value,0));
+    if (!to || amount < 1) return message('Choose a player and gift amount.');
+    const result = await withError(client.rpc('send_gift', { p_room_id: state.room.id, p_to_id: to, p_amount: amount }), 'Gift sent from your multiplayer wallet.');
+    if (result) await refreshRoomData();
+  }
+
+  async function proposeDeal() {
+    if (!state.room) return;
+    const to = $('mp-target')?.value, kind = $('mp-deal-kind')?.value || 'alliance';
+    if (!to) return message('Choose another player.');
+    const offer = kind === 'trade' ? Math.max(0,Math.floor(num($('mp-offer-cash')?.value,0))) : 0;
+    const request = kind === 'trade' ? Math.max(0,Math.floor(num($('mp-request-cash')?.value,0))) : 0;
+    const terms = { note: String($('mp-deal-note')?.value || '').slice(0,300) };
+    const result = await withError(client.rpc('propose_player_deal', { p_room_id: state.room.id, p_to_id: to, p_kind: kind, p_offer_cash: offer, p_request_cash: request, p_terms: terms }), 'Deal proposal sent.');
+    if (result) await refreshRoomData();
+  }
+
+  async function respondDeal(id, accept) {
+    const result = await withError(client.rpc('respond_player_deal', { p_deal_id: id, p_accept: accept }), accept ? 'Deal accepted.' : 'Deal declined.');
+    if (result) await refreshRoomData();
+  }
+
+  async function proposeBill() {
+    if (!state.room) return;
+    const title = ($('mp-bill-title')?.value || '').trim();
+    const deadline = Math.max(1,Math.floor(num(G?.day,1))+Math.max(1,Math.min(30,Math.floor(num($('mp-bill-days')?.value,6)))));
+    const effects = { approval: 1 };
+    const id = await withError(client.rpc('propose_room_bill', { p_room_id: state.room.id, p_title: title, p_economy: 0, p_social: 0, p_effects: effects, p_deadline_day: deadline }), 'Bill tabled for human voting.');
+    if (id) { $('mp-bill-title').value = ''; await refreshRoomData(); }
+  }
+
+  async function castVote(id, value) {
+    const result = await withError(client.rpc('cast_room_vote', { p_bill_id: id, p_vote: value }), value ? 'Vote recorded: Aye.' : 'Vote recorded: No.');
+    if (result !== null) await refreshRoomData();
+  }
+
+  async function resolveVote(id) {
+    const result = await withError(client.rpc('resolve_room_vote', { p_bill_id: id }), 'Vote resolved by the server.');
+    if (result) await refreshRoomData();
+  }
+
+  async function shareState(key, value) {
+    if (!state.room) return;
+    const result = await withError(client.rpc('publish_room_state', { p_room_id: state.room.id, p_key: key, p_value: value }), 'Shared room update published.');
+    if (result) await refreshRoomData();
+  }
+
+  async function toggleMute(userId) {
+    if (!state.room || userId === state.user.id) return;
+    const exists = state.muted.has(userId);
+    const query = exists
+      ? client.from('player_mutes').delete().eq('room_id',state.room.id).eq('user_id',state.user.id).eq('muted_user_id',userId)
+      : client.from('player_mutes').insert({ room_id:state.room.id,user_id:state.user.id,muted_user_id:userId });
+    const { error } = await query;
+    if (error) return message(errorText(error));
+    await refreshRoomData(); await refreshChat();
+  }
+
+  function applyResolvedBill(bill) {
+    if (!G || !bill || bill.status === 'open') return;
+    G.mpAppliedBillIds = Array.isArray(G.mpAppliedBillIds) ? G.mpAppliedBillIds : [];
+    if (G.mpAppliedBillIds.includes(bill.id)) return;
+    G.mpAppliedBillIds.push(bill.id);
+    if (G.mpAppliedBillIds.length > 100) G.mpAppliedBillIds.shift();
+    if (bill.status === 'passed') {
+      const fx = bill.effects || {};
+      if (fx.approval) G.eco.appr = cl(G.eco.appr + num(fx.approval), 5, 95);
+      if (fx.tax) G.eco.tax = cl(G.eco.tax + num(fx.tax), 15, 50);
+      if (fx.services) G.eco.serv = cl(G.eco.serv + num(fx.services), 10, 100);
+      if (fx.gdp) G.eco.gdp = cl(G.eco.gdp + num(fx.gdp), -4, 6);
+      news(`Shared bill PASSED: ${bill.title}. Effects applied to this campaign.`);
+    } else news(`Shared bill REJECTED: ${bill.title}.`);
+    save(); render();
+  }
+
+  async function onSharedState(payload) {
+    const row = payload.new;
+    if (!row || row.room_id !== state.room?.id) return;
+    const previousVersion = num(state.seenSharedVersions.get(row.key),0);
+    if (num(row.version,0) <= previousVersion) return;
+    state.seenSharedVersions.set(row.key,num(row.version,0));
+    const ix = state.shared.findIndex(x => x.key === row.key);
+    if (ix >= 0) state.shared[ix] = row; else state.shared.push(row);
+    if (row.key === 'clock' && !state.isHost && G) {
+      const c = row.value || {}; G.spd = c.paused ? 0 : num(c.speed,1); G.day = Math.max(G.day,num(c.day,G.day));
+    }
+    updateMultiplayerPanel();
+    const payloadValue = row.value || {};
+    if (G && row.key === 'news' && payloadValue.type === 'gift') {
+      const sender = state.roomPlayers.find(p=>p.user_id===payloadValue.from_id)?.profile?.username || 'A player';
+      const recipient = state.roomPlayers.find(p=>p.user_id===payloadValue.to_id)?.profile?.username || 'another player';
+      news(`${sender} sent ${recipient} a $${Math.round(num(payloadValue.amount))} multiplayer wallet gift.`); render();
+    } else if (G && row.key === 'bills' && payloadValue.result?.bill_id) {
+      const bill = state.bills.find(x=>x.id===payloadValue.result.bill_id);
+      if (bill) applyResolvedBill(bill);
+    } else if (G && row.key === 'relations' && payloadValue.target_id) {
+      G.relations = G.relations || {};
+      G.relations[`${payloadValue.actor_id}:${payloadValue.target_id}`] = num(payloadValue.score,0);
+      news(`Shared diplomacy: ${String(payloadValue.note || 'A relation changed').slice(0,150)}.`); render();
+    } else if (G && row.key === 'sanctions' && payloadValue.target_id) {
+      G.sanctions = G.sanctions || [];
+      G.sanctions.unshift({ target_id:payloadValue.target_id, active:!!payloadValue.active, note:String(payloadValue.note || '').slice(0,160), day:G.day });
+      news(`Shared sanction update: ${String(payloadValue.note || 'Sanctions changed').slice(0,150)}.`); render();
+    } else if (G && row.key === 'elections' && payloadValue.from_id !== state.user.id) {
+      G.lastElec = payloadValue.election || G.lastElec;
+      news(`[Parliament online] ${String(payloadValue.text || 'A room election was published').slice(0,180)}.`); render();
+    } else if (G && ['travel','news','actions'].includes(row.key) && payloadValue.text && payloadValue.from_id !== state.user.id) {
+      news(`[Parliament online] ${String(payloadValue.text).slice(0,220)}`); render();
+    }
+  }
+
+  async function publishClock(force=false) {
+    if (!online() || !state.room || !state.isHost || !G) return;
+    const speed = [0,1,2,4].includes(G.spd) ? G.spd : 0;
+    const now = Date.now();
+    if (!force && now-state.lastClockAt < 1500 && G.day===state.lastClockDay) return;
+    state.lastClockAt = now; state.lastClockDay = G.day;
+    const { error } = await client.rpc('set_world_clock', { p_room_id:state.room.id,p_day:Math.max(1,G.day),p_speed:speed,p_paused:speed===0 });
+    if (error) console.warn('World clock update failed:',errorText(error));
+  }
+
+  async function publishRoomEvent(key, textValue, extra={}) {
+    if (!online() || !state.room) return;
+    if (key === 'actions') { const now=Date.now(); if (now-state.lastActionAt < 1800) return; state.lastActionAt=now; }
+    const value = { text:String(textValue || '').slice(0,300), ...extra, from_id:state.user.id, username:state.profile.username, day:num(G?.day,1), at:new Date().toISOString() };
+    await shareState(key,value);
+  }
+
+  async function disconnectRoom() {
+    clearInterval(state.presenceTimer); clearInterval(state.refreshTimer);
+    if (state.realtime && client) { try { await client.removeChannel(state.realtime); } catch (_) {} }
+    state.realtime = null; state.room = null; state.roomPlayers = [];
+  }
+  async function switchOffline() {
+    if (G) { try { localStorage.setItem('parl1', JSON.stringify(G)); window.PARL_HAS_SAVE = true; } catch (_) {} }
+    state.offline = true; window.PARL_OFFLINE = true;
+    await disconnectRoom();
+    message('Offline solo mode enabled. Room play is paused; saves stay on this device.');
+    render();
+  }
+  async function logout() {
+    await flushSave();
+    await disconnectRoom();
+    if (client) { try { await client.auth.signOut({ scope:'local' }); } catch (_) {} }
+    state.user=null; state.profile=null; state.offline=false;
+    location.reload();
+  }
+
+  function roomPanel() {
+    if (!online()) return `<div class="pn"><h3>Online multiplayer</h3><div class="mu">Sign in with a Supabase username and password to create or join rooms. Offline solo mode remains available.</div></div>`;
+    const room = state.room;
+    const targetOptions = state.roomPlayers.filter(p => p.user_id !== state.user.id).map(p => `<option value="${esc(p.user_id)}">${esc(p.profile.username || 'Player')} · ${esc(p.party)}</option>`).join('');
+    const players = state.roomPlayers.map(p => {
+      const you = p.user_id === state.user.id, pr = p.presence || {};
+      return `<div class="nw"><b style="color:${esc(p.profile.colour || '#c9a24b')}">${esc(p.profile.username || 'Player')}</b>${you?' (you)':''} · ${esc(p.role)} · ${esc(p.party)}<br><span class="mu">📍 ${esc(pr.location || '—')} · approval ${Math.round(num(pr.approval,0))}% · cash $${Math.round(num(pr.cash,0))} · day ${Math.round(num(pr.day,1))} · seats ${Math.round(num(pr.seats,0))} · PM days ${Math.round(num(pr.days_pm,0))}</span>${!you?` <button onclick="MP.mute('${esc(p.user_id)}')">${state.muted.has(p.user_id)?'Unmute':'Mute'}</button>`:''}</div>`;
+    }).join('') || '<span class="mu">No players yet.</span>';
+    const leaderboard = [...state.roomPlayers].sort((a,b) => num(b.presence?.approval)-num(a.presence?.approval) || num(b.wallet?.balance)-num(a.wallet?.balance)).map((p,i) => `<div class="nw">${i+1}. <b>${esc(p.profile.username || 'Player')}</b> · approval ${Math.round(num(p.presence?.approval))}% · cash $${Math.round(num(p.presence?.cash))} · seats ${Math.round(num(p.presence?.seats))} · PM days ${Math.round(num(p.presence?.days_pm))} · gift wallet $${Math.round(num(p.wallet?.balance))}</div>`).join('') || '<span class="mu">Leaderboard appears once players join.</span>';
+    const selectedChannel = state.chatChannel || 'room';
+    const messages = state.messages.filter(m => m.channel===selectedChannel && (selectedChannel==='global' || (room && m.room_id===room.id)) && (selectedChannel!=='dm' || m.from_id===state.user.id || m.to_id===state.user.id)).filter(m => !state.muted.has(m.from_id)).slice(-40).map(m => {
+      const p = state.roomPlayers.find(x => x.user_id===m.from_id);
+      const sender = p?.profile?.username || (m.from_id===state.user.id?state.profile.username:'Player');
+      return `<div class="nw"><b>${esc(sender)}</b> <span class="mu">${esc(m.channel)} · ${esc(new Date(m.created_at).toLocaleTimeString())}</span><br>${esc(m.body)}</div>`;
+    }).join('') || '<span class="mu">No chat messages.</span>';
+    const openBills = state.bills.map(b => {
+      const myVote = state.votes.find(v => v.bill_id===b.id && v.user_id===state.user.id);
+      const counts = state.votes.filter(v=>v.bill_id===b.id);
+      const yes=counts.filter(v=>v.vote).length, no=counts.length-yes;
+      const resolved = b.status !== 'open';
+      return `<div class="nw"><b>${esc(b.title)}</b> · ${esc(b.status)} · deadline day ${b.deadline_day}<br><span class="mu">Human votes: ${yes} Aye / ${no} No</span>${!resolved?`<br><button onclick="MP.vote('${b.id}',true)" ${myVote?'disabled':''}>Aye</button><button onclick="MP.vote('${b.id}',false)" ${myVote?'disabled':''}>No</button>${G?.day>=b.deadline_day?`<button onclick="MP.resolve('${b.id}')">Resolve at deadline</button>`:''}`:`<div class="mu">Result: ${esc(JSON.stringify(b.result || {}))}</div>`}</div>`;
+    }).join('') || '<span class="mu">No shared bills yet.</span>';
+    const deals = state.deals.map(d => {
+      const incoming = d.to_id===state.user.id;
+      const sender = state.roomPlayers.find(p=>p.user_id===(incoming?d.from_id:d.to_id))?.profile?.username || 'Player';
+      return `<div class="nw"><b>${esc(d.kind)}</b> with ${esc(sender)} · ${esc(d.status)}${d.kind==='trade'?` · offer $${d.offer_cash}, request $${d.request_cash}`:''}${incoming&&d.status==='pending'?`<br><button onclick="MP.respond('${d.id}',true)">Accept</button><button onclick="MP.respond('${d.id}',false)">Decline</button>`:''}</div>`;
+    }).join('') || '<span class="mu">No coalition, alliance or trade proposals.</span>';
+    const shared = state.shared.filter(x=>x.key!=='clock').map(x=>`<div class="nw"><b>${esc(x.key)}</b> · v${x.version}<br><span class="mu">${esc(JSON.stringify(x.value).slice(0,380))}</span></div>`).join('') || '<span class="mu">No shared diplomatic events yet.</span>';
+    const clock = state.shared.find(x=>x.key==='clock')?.value || {day:G?.day||1,speed:0,paused:true};
+    return `<div class="g">
+      <div class="pn"><h3>Room lobby</h3><div><b>${esc(room?.name || 'No room joined')}</b></div>${room?`Join code: <b style="color:#c9a24b;letter-spacing:.15em">${esc(room.code)}</b> · ${state.isHost?'Host':'Member'} · Realtime: ${esc(state.status)}<br><button onclick="MP.copyCode()">Copy join code</button><button onclick="MP.leaveRoom()">Leave room</button>`:`<input id="mp-room-name" maxlength="60" placeholder="Room name" style="width:100%;margin:4px 0"><button onclick="MP.createRoom()">Create room</button><hr style="border-color:#2a3144"><input id="mp-room-code" maxlength="6" placeholder="6-character join code" style="width:100%;margin:4px 0"><input id="mp-party" maxlength="60" placeholder="Party" value="${esc(state.profile.party || 'Independent')}" style="width:100%;margin:4px 0"><select id="mp-role"><option value="mp">Member of Parliament</option><option value="leader">Party leader</option></select><button onclick="MP.joinRoom()">Join room</button>`}</div>
+      <div class="pn"><h3>Shared world clock</h3>Day ${Math.round(num(clock.day,1))} · ${clock.paused?'Paused':'Running'} · speed ${num(clock.speed,0)}×<br>${state.isHost?`<button onclick="MP.clock(0)">Pause</button><button onclick="MP.clock(1)">1×</button><button onclick="MP.clock(2)">2×</button><button onclick="MP.clock(4)">4×</button>`:'<span class="mu">The host controls pause and speed.</span>'}</div>
+      <div class="pn"><h3>Players in this parliament (${state.roomPlayers.length})</h3>${players}</div>
+      <div class="pn"><h3>Leaderboard</h3>${leaderboard}<div class="mu">Approval/cash/day/seat figures are reported from each client game; the multiplayer gift wallet is server-authoritative.</div></div>
+      <div class="pn"><h3>Chat · Realtime</h3><select id="mp-chat-channel" onchange="MP.chatMode()"><option value="room" ${state.chatChannel==='room'?'selected':''}>Room</option><option value="global" ${state.chatChannel==='global'?'selected':''}>Global</option><option value="party" ${state.chatChannel==='party'?'selected':''}>Party</option><option value="dm" ${state.chatChannel==='dm'?'selected':''}>Private DM</option></select><select id="mp-chat-target" style="${state.chatChannel==='dm'?'':'display:none'}">${targetOptions}</select><div style="height:170px;overflow:auto;margin:5px 0;padding:5px;background:#0e1118;border:1px solid #2a3144;border-radius:4px">${messages}</div><input id="mp-message" maxlength="300" placeholder="Message (300 characters max)" style="width:100%" onkeydown="if(event.key==='Enter')MP.sendChat()"><button onclick="MP.sendChat()">Send</button><div class="mu">HTML is escaped. Chat is limited to 8 messages per minute per player.</div></div>
+      <div class="pn"><h3>Server-validated gifts and deals</h3><select id="mp-target">${targetOptions}</select><div style="margin:4px 0"><input id="mp-gift-amount" type="number" min="1" max="50000" value="100" style="width:85px"><button onclick="MP.gift()">Send gift</button> <span class="mu">Wallet starts at $300 per room.</span></div><select id="mp-deal-kind"><option value="coalition">Coalition offer</option><option value="alliance">Alliance</option><option value="trade">Trade</option></select><input id="mp-offer-cash" type="number" min="0" max="50000" value="0" placeholder="Offer $" style="width:90px"><input id="mp-request-cash" type="number" min="0" max="50000" value="0" placeholder="Request $" style="width:90px"><input id="mp-deal-note" maxlength="300" placeholder="Deal terms" style="width:100%;margin:4px 0"><button onclick="MP.proposeDeal()">Propose deal</button>${deals}</div>
+      <div class="pn"><h3>Human parliamentary voting</h3><input id="mp-bill-title" maxlength="100" placeholder="Bill title" style="width:68%"><input id="mp-bill-days" type="number" min="1" max="30" value="6" style="width:48px"><button onclick="MP.proposeBill()">Table bill</button>${openBills}</div>
+      <div class="pn"><h3>Shared diplomacy and news</h3><input id="mp-diplomacy-note" maxlength="250" placeholder="Describe a relation, sanction, election or action" style="width:100%"><label class="mu">Relation score −100 to +100 <input id="mp-rel-score" type="number" min="-100" max="100" value="0" style="width:75px"></label><button onclick="MP.share('relations')">Publish relations</button><button onclick="MP.share('sanctions')">Publish sanctions</button><button onclick="MP.share('lift-sanctions')">Lift sanction</button><button onclick="MP.share('elections')">Publish election</button>${shared}</div>
+      <div class="pn"><h3>Account</h3>${esc(state.profile.username)} · ${esc(state.profile.party)}<br><button onclick="MP.offline()">Switch to offline solo</button><button onclick="MP.logout()">Log out</button><div class="mu">The password and authenticated session are not persisted by this page.</div></div>
+    </div>`;
+  }
+
+  function updateMultiplayerPanel() {
+    if (G && G.tab === TABS.length-1) render();
+  }
+  function T9() { return roomPanel(); }
+  TABS.push('Multiplayer'); TV.push(T9);
+
+  // Wrap the original controls without replacing simulation logic.
+  const originalSpeed = H.spd;
+  H.spd = value => {
+    if (state.room && !state.isHost) { message('Only the room host controls the shared clock.'); return; }
+    originalSpeed(value);
+    publishClock();
+  };
+  const originalTick = tick;
+  tick = function() {
+    originalTick();
+    if (G && G.gov?.pm === G.mid) G.daysPM = num(G.daysPM,0) + 1;
+    if (state.room && state.isHost) publishClock();
+    if (state.room) publishPresence();
+  };
+  const originalGo = H.go;
+  H.go = function(country, mode) {
+    originalGo(country, mode);
+    if (state.room) publishRoomEvent('travel', `${state.profile.username} travelled to ${country}.`, { country, mode });
+  };
+  const originalSnapElection = H.snapElec;
+  H.snapElec = function() {
+    originalSnapElection();
+    if (state.room && G?.lastElec) publishRoomEvent('elections', `${state.profile.username} triggered an election on day ${G.day}.`, { election:G.lastElec });
+  };
+
+  const originalDispatch = D;
+  D = function(action, ...args) {
+    const result = originalDispatch(action, ...args);
+    const quiet = new Set(['tab','sel','spd','day','week','save','load','newg','start','sb','go','snapElec']);
+    if (state.room && online() && !quiet.has(action)) publishRoomEvent('actions', `${state.profile.username} performed ${String(action).slice(0,40)}.`, { action:String(action).slice(0,40) });
+    return result;
+  };
+
+  window.MP = {
+    createRoom, joinRoom, logout, offline:switchOffline, gift, proposeDeal, respond:respondDeal, proposeBill, vote:castVote, resolve:resolveVote,
+    sendChat, mute:toggleMute,
+    copyCode:() => { if (state.room?.code) navigator.clipboard?.writeText(state.room.code).then(()=>message('Room code copied.')).catch(()=>message(state.room.code)); },
+    leaveRoom:async () => { if (state.realtime) await client.removeChannel(state.realtime); state.room=null; state.realtime=null; clearInterval(state.presenceTimer); clearInterval(state.refreshTimer); render(); },
+    clock:value => { if (!state.room || !state.isHost || !G) return; G.spd=value; publishClock(); render(); },
+    share:key => { const note=String($('mp-diplomacy-note')?.value||'').trim(); if (!note) return message('Enter a short description first.');
+      if (key==='relations') { const target=$('mp-target')?.value; if (!target) return message('Choose a player for this relation update.'); shareState('relations',{actor_id:state.user.id,target_id:target,score:Math.max(-100,Math.min(100,Math.round(num($('mp-rel-score')?.value,0)))),note}); }
+      else if (key==='sanctions' || key==='lift-sanctions') { if (!state.isHost) return message('Only the host can publish room sanctions.'); const target=$('mp-target')?.value; if (!target) return message('Choose a player to sanction or clear.'); shareState('sanctions',{target_id:target,active:key==='sanctions',note}); }
+      else if (key==='elections') { if (!state.isHost) return message('Only the host can publish a room election.'); publishRoomEvent('elections',note,{election:G?.lastElec||{day:G?.day||1,note}}); }
+    },
+    chatMode:() => { state.chatChannel=$('mp-chat-channel')?.value || 'room'; const target=$('mp-chat-target'); if(target) target.style.display=state.chatChannel==='dm'?'':'none'; render(); },
+  };
+
+  // Every page load starts unauthenticated because persistSession:false; no password is retained.
+  authOverlay();
+})();
+
+</script></body></html>
